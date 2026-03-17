@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BatiConnect — Prototype</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const _URL = "https://qlpsantpdtarnrqnjmik.supabase.co";
+  const _KEY = "sb_publishable_7TrwU7Q2o69F1R6xKy3-Qg_jvCgSElW";
+  const db = supabase.createClient(_URL, _KEY);
+  function toast(msg,type="success"){const c={success:"#1D9E75",error:"#A32D2D",info:"#D85A30"};const t=document.createElement("div");t.style.cssText="position:fixed;bottom:24px;right:24px;z-index:9999;background:white;border-left:4px solid "+c[type]+";padding:14px 18px;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.15);font-size:13px;display:flex;gap:10px;max-width:340px";t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3500);}
+  window.addEventListener("load", async()=>{
+    const {data:{user}} = await db.auth.getUser();
+    if(user){
+      const badge = document.getElementById("nav-user-badge");
+      if(badge){ badge.style.display="flex"; badge.textContent="👤 Connecté"; }
+    }
+  });
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --orange: #D85A30; --orange-light: #FAECE7; --orange-dark: #993C1D;
+    --teal: #1D9E75; --teal-light: #E1F5EE;
+    --gray-50: #F9F8F5; --gray-100: #F1EFE8; --gray-200: #D3D1C7;
+    --gray-400: #888780; --gray-900: #2C2C2A; --white: #FFFFFF;
+    --font: 'Sora', sans-serif; --font-body: 'DM Sans', sans-serif;
+  }
+  body { font-family: var(--font); background: var(--gray-50); color: var(--gray-900); min-height: 100vh; }
+
+  /* HERO */
+  .hero { background: linear-gradient(135deg, #1a0f0a 0%, var(--orange-dark) 55%, #D87040 100%); padding: 60px 24px 50px; text-align: center; position: relative; overflow: hidden; }
+  .hero::before { content: ''; position: absolute; top: -60px; right: -60px; width: 280px; height: 280px; border-radius: 50%; background: rgba(255,255,255,0.05); }
+  .hero::after { content: ''; position: absolute; bottom: -40px; left: -40px; width: 200px; height: 200px; border-radius: 50%; background: rgba(255,255,255,0.03); }
+  .logo { display: inline-flex; align-items: center; gap: 12px; margin-bottom: 28px; position: relative; z-index: 1; }
+  .logo-icon { width: 48px; height: 48px; background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.3); border-radius: 14px; display: flex; align-items: center; justify-content: center; }
+  .logo-icon svg { width: 24px; height: 24px; fill: white; }
+  .logo-text { font-size: 26px; font-weight: 700; color: white; }
+  .logo-text span { color: #FFD4C0; }
+  .hero-title { font-size: 36px; font-weight: 700; color: white; margin-bottom: 14px; position: relative; z-index: 1; line-height: 1.2; }
+  .hero-sub { font-size: 16px; color: rgba(255,255,255,0.75); font-family: var(--font-body); max-width: 520px; margin: 0 auto 28px; line-height: 1.7; position: relative; z-index: 1; }
+  .hero-badges { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; position: relative; z-index: 1; }
+  .hbadge { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); color: white; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+
+  /* MAIN */
+  .container { max-width: 900px; margin: 0 auto; padding: 40px 24px 60px; }
+  .section-title { font-size: 13px; font-weight: 600; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 18px; display: flex; align-items: center; gap: 10px; }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--gray-200); }
+
+  /* MODULE CARDS */
+  .modules-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-bottom: 40px; }
+  .module-card { background: var(--white); border: 1.5px solid var(--gray-100); border-radius: 16px; padding: 22px; text-decoration: none; color: inherit; transition: all 0.22s; display: flex; flex-direction: column; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .module-card:hover { border-color: var(--orange); box-shadow: 0 8px 30px rgba(216,90,48,0.12); transform: translateY(-3px); }
+  .mc-top { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 12px; }
+  .mc-icon { width: 46px; height: 46px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+  .ic-orange { background: var(--orange-light); }
+  .ic-teal { background: var(--teal-light); }
+  .ic-amber { background: #FAEEDA; }
+  .ic-blue { background: #E6F1FB; }
+  .ic-purple { background: #EDE8F7; }
+  .ic-red { background: #FCEBEB; }
+  .mc-info { flex: 1; }
+  .mc-num { font-size: 10px; font-weight: 600; color: var(--orange); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 3px; }
+  .mc-title { font-size: 15px; font-weight: 700; color: var(--gray-900); margin-bottom: 2px; }
+  .mc-sub { font-size: 11px; color: var(--gray-400); font-family: var(--font-body); }
+  .mc-desc { font-size: 13px; color: #5F5E5A; font-family: var(--font-body); line-height: 1.6; margin-bottom: 16px; flex: 1; }
+  .mc-features { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+  .mc-feat { font-size: 11px; background: var(--gray-50); color: var(--gray-400); padding: 3px 9px; border-radius: 20px; font-family: var(--font-body); border: 1px solid var(--gray-100); }
+  .mc-btn { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; background: var(--orange-light); border-radius: 10px; font-size: 13px; font-weight: 600; color: var(--orange-dark); transition: background 0.18s; }
+  .module-card:hover .mc-btn { background: var(--orange); color: white; }
+
+  /* INSTRUCTIONS */
+  .info-box { background: var(--white); border: 1.5px solid var(--gray-100); border-radius: 16px; padding: 24px; margin-bottom: 24px; }
+  .info-box-title { font-size: 14px; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .steps { display: flex; flex-direction: column; gap: 10px; }
+  .step { display: flex; gap: 12px; align-items: flex-start; }
+  .step-num { width: 26px; height: 26px; border-radius: 50%; background: var(--orange); color: white; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+  .step-text { font-size: 13px; font-family: var(--font-body); color: #5F5E5A; line-height: 1.6; }
+  .step-text strong { color: var(--gray-900); }
+
+  /* FOOTER */
+  .footer { text-align: center; padding: 30px 24px; border-top: 1px solid var(--gray-100); }
+  .footer-text { font-size: 12px; color: var(--gray-400); font-family: var(--font-body); }
+
+  @media (max-width: 600px) {
+    .modules-grid { grid-template-columns: 1fr; }
+    .hero-title { font-size: 26px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22" fill="none" stroke="white" stroke-width="1.5"/></svg>
+    </div>
+    <span class="logo-text">Bati<span>Connect</span></span>
+  </div>
+  <div class="hero-title">Prototype Complet 🎉</div>
+  <div class="hero-sub">Plateforme africaine de mise en relation entre clients et artisans vérifiés. Cliquez sur un module ci-dessous pour l'explorer.</div>
+  <div class="hero-badges">
+    <span class="hbadge">🏗️ 8 modules</span>
+    <span class="hbadge">📱 50+ écrans</span>
+    <span class="hbadge">🔒 Paiement sécurisé</span>
+    <span class="hbadge">🌍 Made in Bénin</span>
+  </div>
+</div>
+
+<!-- MODULES -->
+<div class="container">
+
+  <div class="section-title">Modules de l'application</div>
+
+  <div class="modules-grid">
+
+    <a class="module-card" href="baticonnect-profils.html">
+      <div class="mc-top">
+        <div class="mc-icon ic-orange">👤</div>
+        <div class="mc-info">
+          <div class="mc-num">Module 01</div>
+          <div class="mc-title">Profils</div>
+          <div class="mc-sub">Demandeur & Prestataire</div>
+        </div>
+      </div>
+      <div class="mc-desc">Création de profil en 3 étapes, vérification CNI, portfolio, badges de confiance et profils publics.</div>
+      <div class="mc-features">
+        <span class="mc-feat">Inscription 3 étapes</span>
+        <span class="mc-feat">Vérification CNI</span>
+        <span class="mc-feat">Portfolio</span>
+        <span class="mc-feat">Badges Trust</span>
+      </div>
+      <div class="mc-btn">Ouvrir le module <span>→</span></div>
+    </a>
+
+    <a class="module-card" href="baticonnect-auth.html">
+      <div class="mc-top">
+        <div class="mc-icon ic-blue">🔐</div>
+        <div class="mc-info">
+          <div class="mc-num">Module 02</div>
+          <div class="mc-title">Authentification</div>
+          <div class="mc-sub">Connexion & Sécurité</div>
+        </div>
+      </div>
+      <div class="mc-desc">Connexion sécurisée, double authentification SMS, vérification email, réinitialisation mot de passe.</div>
+      <div class="mc-features">
+        <span class="mc-feat">2FA SMS</span>
+        <span class="mc-feat">Vérification email</span>
+        <span class="mc-feat">Google / Facebook</span>
+        <span class="mc-feat">10 écrans</span>
+      </div>
+      <div class="mc-btn">Ouvrir le module <span>→</span></div>
+    </a>
+
+    <a class="module-card" href="baticonnect-publication.html">
+      <div class="mc-top">
+        <div class="mc-icon ic-amber">📋</div>
+        <div class="mc-info">
+          <div class="mc-num">Module 03</div>
+          <div class="mc-title">Publication & Candidature</div>
+          <div class="mc-sub">Annonces & Propositions</div>
+        </div>
+      </div>
+      <div class="mc-desc">Publication d'annonces en 4 étapes, système de candidatures avec propositions de prix, sélection d'artisan.</div>
+      <div class="mc-features">
+        <span class="mc-feat">Annonces filtrées</span>
+        <span class="mc-feat">Candidatures</span>
+        <span class="mc-feat">Sélection artisan</span>
+        <span class="mc-feat">6 pages</span>
+      </div>
+      <div class="mc-btn">Ouvrir le module <span>→</span></div>
+    </a>
+
+    <a class="module-card" href="baticonnect-paiement.html">
+      <div class="mc-top">
+        <div class="mc-icon ic-teal">🔒</div>
+        <div class="mc-info">
+          <div class="mc-num">Module 04</div>
+          <div class="mc-title">Paiement Sécurisé</div>
+          <div class="mc-sub">Dépôt · Jalons · Retrait</div>
+        </div>
+      </div>
+      <div class="mc-desc">Système de paiement bloqué libéré à la validation. Mobile Money, virement, pénalités automatiques, litiges.</div>
+      <div class="mc-features">
+        <span class="mc-feat">MTN MoMo</span>
+        <span class="mc-feat">Paiement par jalons</span>
+        <span class="mc-feat">Pénalités auto</span>
+        <span class="mc-feat">9 écrans</span>
+      </div>
+      <div class="mc-btn">Ouvrir le module <span>→</span></div>
+    </a>
+
+    <a class="module-card" href="baticonnect-messagerie.html">
+      <div class="mc-top">
+        <div class="mc-icon ic-orange">💬</div>
+        <div class="mc-info">
+          <div class="mc-num">Module 05</div>
+          <div class="mc-title">Messagerie</div>
+          <div class="mc-sub">Chiffrée bout en bout</div>
+        </div>
+      </div>
+      <div class="mc-desc">Chat sécurisé, photos, fichiers PDF, messages vocaux, indicateur de frappe, panneau de mission intégré.</div>
+      <div class="mc-features">
+        <span class="mc-feat">Photos & vidéos</span>
+        <span class="mc-feat">Messages vocaux</span>
+        <span class="mc-feat">Fichiers PDF</span>
+        <span class="mc-feat">Chiffré E2E</span>
+      </div>
+      <div class="mc-btn">Ouvrir le module <span>→</span></div>
+    </a>
+
+    <a class="module-card" href="baticonnect-suivi-chantier.html">
+      <div class="mc-top">
+        <div class="mc-icon ic-teal">📍</div>
+        <div class="mc-info">
+          <div class="mc-num">Module 06</div>
+          <div class="mc-title">Suivi de Chantier</div>
+          <div class="mc-sub">Rapports · GPS · Jalons</div>
+        </div>
+      </div>
+      <div class="mc-desc">Suivi en temps réel, rapports photo avec GPS, avancement par zone, timeline des jalons, alertes retard.</div>
+      <div class="mc-features">
+        <span class="mc-feat">GPS vérifié</span>
+        <span class="mc-feat">Rapports photo</span>
+        <span class="mc-feat">Jalons timeline</span>
+        <span class="mc-feat">3 pages</span>
+      </div>
+      <div class="mc-btn">Ouvrir le module <span>→</span></div>
+    </a>
+
+    <a class="module-card" href="baticonnect-notation.html">
+      <div class="mc-top">
+        <div class="mc-icon ic-amber">⭐</div>
+        <div class="mc-info">
+          <div class="mc-num">Module 07</div>
+          <div class="mc-title">Notation & Pénalités</div>
+          <div class="mc-sub">Avis · Classement · Sanctions</div>
+        </div>
+      </div>
+      <div class="mc-desc">Notation sur 6 critères, badges Expert/Certifié/Vérifié, classement national, grille de pénalités automatiques.</div>
+      <div class="mc-features">
+        <span class="mc-feat">6 critères de note</span>
+        <span class="mc-feat">Badges confiance</span>
+        <span class="mc-feat">Classement</span>
+        <span class="mc-feat">Pénalités auto</span>
+      </div>
+      <div class="mc-btn">Ouvrir le module <span>→</span></div>
+    </a>
+
+    <a class="module-card" href="baticonnect-admin.html">
+      <div class="mc-top">
+        <div class="mc-icon ic-purple">⚙️</div>
+        <div class="mc-info">
+          <div class="mc-num">Module 08</div>
+          <div class="mc-title">Tableau de Bord Admin</div>
+          <div class="mc-sub">Gestion · Modération · Stats</div>
+        </div>
+      </div>
+      <div class="mc-desc">Dashboard complet : KPIs, gestion artisans, missions, arbitrage litiges, vérifications CNI, signalements, notifications.</div>
+      <div class="mc-features">
+        <span class="mc-feat">8 KPIs temps réel</span>
+        <span class="mc-feat">Arbitrage litiges</span>
+        <span class="mc-feat">Vérif. CNI</span>
+        <span class="mc-feat">Notifications push</span>
+      </div>
+      <div class="mc-btn">Ouvrir le module <span>→</span></div>
+    </a>
+
+  </div>
+
+  <div class="section-title">Comment naviguer</div>
+  <div class="info-box">
+    <div class="info-box-title">📌 Instructions d'utilisation</div>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-text">Cliquez sur un module pour l'ouvrir dans votre navigateur</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-text">Utilisez les <strong>boutons et liens dans chaque module</strong> pour naviguer entre les écrans</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-text">Revenez ici via le <strong>bouton retour</strong> du navigateur pour changer de module</div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-text">Ce prototype est <strong>100% visuel</strong> — les données sont fictives et ne sont pas sauvegardées</div></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <div class="footer-text">BatiConnect © 2026 · Prototype développé avec Claude (Anthropic) · Tous droits réservés</div>
+</div>
+
+</body>
+</html>

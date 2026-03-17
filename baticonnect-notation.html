@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BatiConnect — Notation & Pénalités</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const db = supabase.createClient("https://qlpsantpdtarnrqnjmik.supabase.co", "sb_publishable_7TrwU7Q2o69F1R6xKy3-Qg_jvCgSElW");
+  function toast(msg, type) {
+    var colors = {success:"#1D9E75", error:"#A32D2D", info:"#D85A30"};
+    var icons  = {success:"&#x2705;", error:"&#x274C;", info:"&#x1F4A1;"};
+    type = type || "success";
+    var el = document.createElement("div");
+    el.style.cssText = "position:fixed;bottom:24px;right:24px;z-index:9999;background:#fff;border-left:4px solid " + (colors[type]||"#1D9E75") + ";padding:14px 18px;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.15);font-family:Sora,sans-serif;font-size:13px;display:flex;align-items:center;gap:10px;max-width:340px";
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(function(){ el.remove(); }, 3500);
+  }
+  async function getUser() {
+    var r = await db.auth.getUser();
+    return r.data.user;
+  }
+  function fmtFCFA(n) {
+    return new Intl.NumberFormat("fr-FR").format(n) + " FCFA";
+  }
+</script>
+<style>@keyframes toastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}</style>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=DM+Sans:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --orange: #D85A30; --orange-light: #FAECE7; --orange-dark: #993C1D;
+    --teal: #1D9E75; --teal-light: #E1F5EE; --teal-dark: #085041;
+    --amber: #BA7517; --amber-light: #FAEEDA;
+    --red: #A32D2D; --red-light: #FCEBEB;
+    --blue: #185FA5; --blue-light: #E6F1FB;
+    --gray-50: #F9F8F5; --gray-100: #F1EFE8; --gray-200: #D3D1C7;
+    --gray-400: #888780; --gray-600: #5F5E5A; --gray-900: #2C2C2A;
+    --white: #FFFFFF;
+    --font: 'Sora', sans-serif; --font-body: 'DM Sans', sans-serif;
+    --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px; --radius-xl: 24px;
+    --shadow-sm: 0 1px 4px rgba(0,0,0,0.06); --shadow-md: 0 4px 20px rgba(0,0,0,0.08);
+    --shadow-lg: 0 8px 40px rgba(0,0,0,0.12);
+  }
+  body { font-family: var(--font); background: var(--gray-50); color: var(--gray-900); min-height: 100vh; }
+
+  .navbar { background: var(--white); border-bottom: 1px solid var(--gray-100); padding: 0 24px; height: 60px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow-sm); }
+  .logo { display: flex; align-items: center; gap: 9px; cursor: pointer; }
+  .logo-icon { width: 34px; height: 34px; background: var(--orange); border-radius: 9px; display: flex; align-items: center; justify-content: center; }
+  .logo-icon svg { width: 17px; height: 17px; fill: white; }
+  .logo-text { font-size: 16px; font-weight: 700; }
+  .logo-text span { color: var(--orange); }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  .container { max-width: 960px; margin: 0 auto; padding: 28px 24px 60px; }
+  .two-col { display: grid; grid-template-columns: 1fr 320px; gap: 20px; align-items: start; }
+
+  .card { background: var(--white); border: 1px solid var(--gray-100); border-radius: var(--radius-lg); padding: 22px; box-shadow: var(--shadow-sm); margin-bottom: 16px; }
+  .card-title { font-size: 14px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
+
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 600; }
+  .badge-teal { background: var(--teal-light); color: var(--teal-dark); }
+  .badge-orange { background: var(--orange-light); color: var(--orange-dark); }
+  .badge-amber { background: var(--amber-light); color: #633806; }
+  .badge-red { background: var(--red-light); color: var(--red); }
+  .badge-blue { background: var(--blue-light); color: var(--blue); }
+  .badge-gray { background: var(--gray-100); color: var(--gray-600); }
+
+  .alert { padding: 12px 15px; border-radius: var(--radius-sm); font-size: 13px; font-family: var(--font-body); line-height: 1.6; margin-bottom: 14px; display: flex; gap: 10px; }
+  .alert-info { background: var(--orange-light); color: var(--orange-dark); }
+  .alert-success { background: var(--teal-light); color: var(--teal-dark); }
+  .alert-warning { background: var(--amber-light); color: #633806; }
+  .alert-red { background: var(--red-light); color: var(--red); }
+
+  /* PROFIL HERO */
+  .profile-hero { background: linear-gradient(135deg, #1a0f0a, var(--orange-dark) 60%, #D87040); border-radius: var(--radius-xl); padding: 28px; color: white; margin-bottom: 20px; position: relative; overflow: hidden; }
+  .profile-hero::before { content:''; position:absolute; top:-40px; right:-40px; width:180px; height:180px; border-radius:50%; background:rgba(255,255,255,0.05); }
+  .ph-top { display: flex; align-items: center; gap: 18px; margin-bottom: 20px; position: relative; z-index: 1; }
+  .ph-avatar { width: 72px; height: 72px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 700; border: 3px solid rgba(255,255,255,0.3); flex-shrink: 0; }
+  .ph-info { flex: 1; }
+  .ph-name { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .ph-role { font-size: 13px; color: rgba(255,255,255,0.7); margin-bottom: 10px; }
+  .ph-badges { display: flex; gap: 8px; flex-wrap: wrap; }
+  .ph-badge { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); color: white; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .ph-score { text-align: right; position: relative; z-index: 1; }
+  .ph-score-num { font-size: 48px; font-weight: 700; line-height: 1; }
+  .ph-score-label { font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 4px; }
+  .ph-stars { font-size: 20px; color: #FFD700; margin-top: 4px; }
+  .ph-stats { display: flex; gap: 24px; position: relative; z-index: 1; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.15); }
+  .ph-stat-val { font-size: 20px; font-weight: 700; }
+  .ph-stat-label { font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 2px; }
+
+  /* TRUST BADGES */
+  .trust-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 20px; }
+  .trust-card { border: 2px solid var(--gray-200); border-radius: var(--radius-lg); padding: 18px; text-align: center; transition: all 0.2s; }
+  .trust-card.earned { border-color: var(--teal); background: var(--teal-light); }
+  .trust-card.locked { opacity: 0.5; }
+  .trust-icon { font-size: 32px; margin-bottom: 8px; }
+  .trust-name { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+  .trust-desc { font-size: 11px; color: var(--gray-400); font-family: var(--font-body); line-height: 1.5; }
+  .trust-earned-label { font-size: 10px; color: var(--teal-dark); font-weight: 600; margin-top: 6px; }
+
+  /* NOTATION FORM */
+  .rating-group { margin-bottom: 20px; }
+  .rating-label { font-size: 13px; font-weight: 500; margin-bottom: 10px; display: flex; justify-content: space-between; }
+  .stars-row { display: flex; gap: 10px; }
+  .star { font-size: 32px; cursor: pointer; color: var(--gray-200); transition: all 0.15s; line-height: 1; }
+  .star.active { color: var(--amber); transform: scale(1.1); }
+  .star:hover { color: var(--amber); transform: scale(1.15); }
+  .rating-score { font-size: 13px; color: var(--gray-400); font-family: var(--font-body); margin-top: 6px; }
+
+  /* AVIS */
+  .avis-item { padding: 16px 0; border-bottom: 1px solid var(--gray-100); }
+  .avis-item:last-child { border-bottom: none; }
+  .avis-top { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+  .avis-avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: white; flex-shrink: 0; }
+  .av-o { background: linear-gradient(135deg,var(--orange),var(--orange-dark)); }
+  .av-t { background: linear-gradient(135deg,var(--teal),var(--teal-dark)); }
+  .av-a { background: linear-gradient(135deg,var(--amber),#633806); }
+  .av-b { background: linear-gradient(135deg,var(--blue),#042C53); }
+  .avis-info { flex: 1; }
+  .avis-name { font-size: 13px; font-weight: 600; }
+  .avis-meta { font-size: 11px; color: var(--gray-400); font-family: var(--font-body); margin-top: 2px; }
+  .avis-stars { font-size: 13px; color: var(--amber); }
+  .avis-text { font-size: 13px; color: var(--gray-600); font-family: var(--font-body); line-height: 1.7; margin-bottom: 10px; }
+  .avis-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+  .avis-tag { padding: 3px 10px; border-radius: 20px; font-size: 11px; background: var(--teal-light); color: var(--teal-dark); font-weight: 500; }
+  .avis-reply { background: var(--gray-50); border-radius: var(--radius-sm); padding: 10px 14px; margin-top: 8px; border-left: 3px solid var(--orange); font-size: 12px; color: var(--gray-600); font-family: var(--font-body); line-height: 1.6; }
+  .avis-reply-label { font-size: 10px; font-weight: 600; color: var(--orange); margin-bottom: 4px; }
+
+  /* PÉNALITÉS */
+  .pen-table { width: 100%; border-collapse: collapse; }
+  .pen-table th { font-size: 11px; font-weight: 600; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; padding: 10px 14px; text-align: left; border-bottom: 2px solid var(--gray-100); }
+  .pen-table td { font-size: 13px; padding: 12px 14px; border-bottom: 1px solid var(--gray-100); font-family: var(--font-body); vertical-align: middle; }
+  .pen-table tr:last-child td { border-bottom: none; }
+  .pen-table tr:hover td { background: var(--gray-50); }
+  .pen-sev { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+  .pen-sev.low { background: var(--amber); }
+  .pen-sev.med { background: var(--orange); }
+  .pen-sev.high { background: var(--red); }
+
+  /* PROGRESS */
+  .prog-wrap { margin-bottom: 10px; }
+  .prog-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--gray-400); margin-bottom: 5px; font-family: var(--font-body); }
+  .prog-bar { height: 8px; background: var(--gray-100); border-radius: 4px; overflow: hidden; }
+  .prog-fill { height: 100%; border-radius: 4px; transition: width 0.6s; }
+  .pf-orange { background: var(--orange); }
+  .pf-teal { background: var(--teal); }
+  .pf-amber { background: var(--amber); }
+
+  /* NOTATION RADAR */
+  .radar-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .radar-item { padding: 12px; background: var(--gray-50); border-radius: var(--radius-sm); }
+  .radar-label { font-size: 12px; font-weight: 500; margin-bottom: 8px; display: flex; justify-content: space-between; }
+  .radar-score { font-weight: 700; }
+  .radar-score.orange { color: var(--orange); }
+  .radar-score.teal { color: var(--teal); }
+  .radar-score.amber { color: var(--amber); }
+
+  /* FORMS */
+  .form-group { margin-bottom: 14px; }
+  .form-label { font-size: 13px; font-weight: 500; margin-bottom: 6px; display: block; }
+  .form-input, .form-textarea, .form-select { width: 100%; padding: 10px 13px; border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm); font-size: 13px; font-family: var(--font-body); color: var(--gray-900); outline: none; transition: border-color 0.2s; background: var(--white); }
+  .form-input:focus, .form-textarea:focus, .form-select:focus { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(216,90,48,0.09); }
+  .form-textarea { resize: vertical; min-height: 90px; line-height: 1.6; }
+  .form-select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%23888780' d='M5 7L0 2h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+  .tag-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .tag-choice { padding: 6px 14px; border-radius: 20px; font-size: 12px; border: 1.5px solid var(--gray-200); background: var(--white); cursor: pointer; font-family: var(--font); transition: all 0.18s; font-weight: 500; }
+  .tag-choice.sel { background: var(--teal-light); border-color: var(--teal); color: var(--teal-dark); }
+  .tag-choice:hover { border-color: var(--teal); }
+
+  /* BTNS */
+  .btn { padding: 10px 18px; border-radius: var(--radius-md); font-size: 13px; font-weight: 600; cursor: pointer; border: none; font-family: var(--font); transition: all 0.2s; display: inline-flex; align-items: center; gap: 7px; }
+  .btn-orange { background: var(--orange); color: white; }
+  .btn-orange:hover { background: var(--orange-dark); transform: translateY(-1px); }
+  .btn-teal { background: var(--teal); color: white; }
+  .btn-teal:hover { background: var(--teal-dark); }
+  .btn-outline { background: var(--white); color: var(--gray-600); border: 1.5px solid var(--gray-200); }
+  .btn-outline:hover { border-color: var(--orange); color: var(--orange); }
+  .btn-full { width: 100%; justify-content: center; padding: 13px; font-size: 14px; }
+
+  /* MODAL */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px; overflow-y: auto; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--white); border-radius: var(--radius-xl); width: 100%; max-width: 580px; box-shadow: var(--shadow-lg); margin: auto; }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border-bottom: 1px solid var(--gray-100); }
+  .modal-title { font-size: 16px; font-weight: 700; }
+  .modal-close { width: 30px; height: 30px; border-radius: 50%; border: none; background: var(--gray-100); cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; }
+  .modal-close:hover { background: var(--gray-200); }
+  .modal-body { padding: 22px 24px; }
+  .modal-footer { padding: 14px 24px; border-top: 1px solid var(--gray-100); display: flex; gap: 10px; justify-content: flex-end; }
+
+  /* TABS */
+  .tabs { display: flex; background: var(--gray-100); border-radius: var(--radius-md); padding: 4px; margin-bottom: 22px; gap: 4px; }
+  .tab { flex: 1; padding: 8px 10px; border-radius: 10px; font-size: 12px; font-weight: 500; cursor: pointer; border: none; background: transparent; color: var(--gray-600); font-family: var(--font); transition: all 0.18s; text-align: center; }
+  .tab.active { background: var(--white); color: var(--orange); box-shadow: var(--shadow-sm); }
+
+  .sticky-box { position: sticky; top: 80px; }
+  .info-row { display: flex; justify-content: space-between; font-size: 13px; padding: 8px 0; border-bottom: 1px solid var(--gray-100); font-family: var(--font-body); }
+  .info-row:last-child { border-bottom: none; }
+  .info-row-label { color: var(--gray-400); }
+
+  /* LEADERBOARD */
+  .lb-item { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--gray-100); }
+  .lb-item:last-child { border-bottom: none; }
+  .lb-rank { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+  .lb-rank.gold { background: #FFD700; color: #7B5E00; }
+  .lb-rank.silver { background: #C0C0C0; color: #444; }
+  .lb-rank.bronze { background: #CD7F32; color: white; }
+  .lb-rank.normal { background: var(--gray-100); color: var(--gray-600); }
+  .lb-avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: white; flex-shrink: 0; }
+  .lb-info { flex: 1; }
+  .lb-name { font-size: 13px; font-weight: 600; }
+  .lb-meta { font-size: 11px; color: var(--gray-400); font-family: var(--font-body); }
+  .lb-score { text-align: right; }
+  .lb-score-val { font-size: 15px; font-weight: 700; color: var(--amber); }
+  .lb-score-count { font-size: 11px; color: var(--gray-400); font-family: var(--font-body); }
+
+  @media (max-width: 820px) {
+    .two-col { grid-template-columns: 1fr; }
+    .trust-grid { grid-template-columns: 1fr 1fr; }
+    .radar-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="logo" onclick="showPage('profil')">
+    <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22" fill="none" stroke="white" stroke-width="1.5"/></svg></div>
+    <span class="logo-text">Bati<span>Connect</span></span>
+  </div>
+  <div style="font-size:14px;font-weight:600">⭐ Notation & Pénalités</div>
+  <div style="display:flex;gap:8px">
+    <button style="padding:7px 14px;border-radius:var(--radius-sm);font-size:12px;font-weight:500;cursor:pointer;border:1.5px solid var(--gray-200);background:var(--white);font-family:var(--font)" onclick="showPage('penalites')">⚠️ Pénalités</button>
+    <button style="padding:7px 14px;border-radius:var(--radius-sm);font-size:12px;font-weight:500;cursor:pointer;border:none;background:var(--orange);color:white;font-family:var(--font)" onclick="showPage('noter')">⭐ Noter une mission</button>
+  </div>
+</nav>
+
+<!-- ════════════ PAGE 1 : PROFIL PUBLIC ════════════ -->
+<div class="page active" id="page-profil">
+  <div class="container">
+
+    <div class="profile-hero">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between">
+        <div class="ph-top" style="margin-bottom:0;flex:1">
+          <div class="ph-avatar">KA</div>
+          <div class="ph-info">
+            <div class="ph-name">Kofi Adetokunbo</div>
+            <div class="ph-role">Maçon & Chef de chantier · Cotonou, Bénin</div>
+            <div class="ph-badges">
+              <span class="ph-badge">✅ Identité vérifiée</span>
+              <span class="ph-badge">🏆 Expert certifié</span>
+              <span class="ph-badge">📷 Photos certifiées</span>
+            </div>
+          </div>
+        </div>
+        <div class="ph-score" style="position:relative;z-index:1">
+          <div class="ph-score-num">4.9</div>
+          <div class="ph-stars">★★★★★</div>
+          <div class="ph-score-label">Note globale</div>
+        </div>
+      </div>
+      <div class="ph-stats">
+        <div><div class="ph-stat-val">47</div><div class="ph-stat-label">Missions terminées</div></div>
+        <div><div class="ph-stat-val">41</div><div class="ph-stat-label">Avis reçus</div></div>
+        <div><div class="ph-stat-val">98%</div><div class="ph-stat-label">Taux de satisfaction</div></div>
+        <div><div class="ph-stat-val">0</div><div class="ph-stat-label">Pénalités actives</div></div>
+        <div><div class="ph-stat-val">12 ans</div><div class="ph-stat-label">Expérience</div></div>
+      </div>
+    </div>
+
+    <!-- Trust Badges -->
+    <div class="trust-grid">
+      <div class="trust-card earned">
+        <div class="trust-icon">✅</div>
+        <div class="trust-name">Profil Vérifié</div>
+        <div class="trust-desc">Identité, CNI et coordonnées vérifiées par BatiConnect</div>
+        <div class="trust-earned-label">✓ Obtenu le 01 Jan. 2025</div>
+      </div>
+      <div class="trust-card earned">
+        <div class="trust-icon">🥈</div>
+        <div class="trust-name">Certifié</div>
+        <div class="trust-desc">10+ missions terminées avec note ≥ 4.0 et zéro abandon</div>
+        <div class="trust-earned-label">✓ Obtenu le 15 Avr. 2025</div>
+      </div>
+      <div class="trust-card earned">
+        <div class="trust-icon">🏆</div>
+        <div class="trust-name">Expert</div>
+        <div class="trust-desc">30+ missions · Note ≥ 4.7 · Aucune pénalité · Rapports réguliers</div>
+        <div class="trust-earned-label">✓ Obtenu le 10 Nov. 2025</div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="setTab(this,'notes')">⭐ Notes détaillées</button>
+      <button class="tab" onclick="setTab(this,'avis')">💬 Avis clients</button>
+      <button class="tab" onclick="setTab(this,'classement')">🏅 Classement</button>
+      <button class="tab" onclick="setTab(this,'historique-pen')">⚠️ Historique pénalités</button>
+    </div>
+
+    <!-- NOTES DÉTAILLÉES -->
+    <div id="tab-notes">
+      <div class="two-col">
+        <div>
+          <div class="card">
+            <div class="card-title">📊 Répartition des notes</div>
+            <div class="radar-grid">
+              <div class="radar-item">
+                <div class="radar-label">Qualité du travail <span class="radar-score teal">4.9</span></div>
+                <div class="prog-bar"><div class="prog-fill pf-teal" style="width:98%"></div></div>
+              </div>
+              <div class="radar-item">
+                <div class="radar-label">Respect des délais <span class="radar-score amber">4.6</span></div>
+                <div class="prog-bar"><div class="prog-fill pf-amber" style="width:92%"></div></div>
+              </div>
+              <div class="radar-item">
+                <div class="radar-label">Communication <span class="radar-score teal">5.0</span></div>
+                <div class="prog-bar"><div class="prog-fill pf-teal" style="width:100%"></div></div>
+              </div>
+              <div class="radar-item">
+                <div class="radar-label">Professionnalisme <span class="radar-score teal">4.9</span></div>
+                <div class="prog-bar"><div class="prog-fill pf-teal" style="width:98%"></div></div>
+              </div>
+              <div class="radar-item">
+                <div class="radar-label">Propreté du chantier <span class="radar-score orange">4.8</span></div>
+                <div class="prog-bar"><div class="prog-fill pf-orange" style="width:96%"></div></div>
+              </div>
+              <div class="radar-item">
+                <div class="radar-label">Rapports photo <span class="radar-score teal">5.0</span></div>
+                <div class="prog-bar"><div class="prog-fill pf-teal" style="width:100%"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">📊 Distribution des notes</div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;align-items:center;gap:10px">
+                <span style="font-size:12px;color:var(--amber);width:18px">★5</span>
+                <div style="flex:1;height:10px;background:var(--gray-100);border-radius:5px;overflow:hidden"><div style="height:100%;width:78%;background:var(--amber);border-radius:5px"></div></div>
+                <span style="font-size:12px;color:var(--gray-400);font-family:var(--font-body);width:32px">78%</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px">
+                <span style="font-size:12px;color:var(--amber);width:18px">★4</span>
+                <div style="flex:1;height:10px;background:var(--gray-100);border-radius:5px;overflow:hidden"><div style="height:100%;width:17%;background:var(--amber);border-radius:5px;opacity:0.7"></div></div>
+                <span style="font-size:12px;color:var(--gray-400);font-family:var(--font-body);width:32px">17%</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px">
+                <span style="font-size:12px;color:var(--amber);width:18px">★3</span>
+                <div style="flex:1;height:10px;background:var(--gray-100);border-radius:5px;overflow:hidden"><div style="height:100%;width:4%;background:var(--amber);border-radius:5px;opacity:0.5"></div></div>
+                <span style="font-size:12px;color:var(--gray-400);font-family:var(--font-body);width:32px">4%</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px">
+                <span style="font-size:12px;color:var(--amber);width:18px">★2</span>
+                <div style="flex:1;height:10px;background:var(--gray-100);border-radius:5px;overflow:hidden"><div style="height:100%;width:1%;background:var(--red);border-radius:5px"></div></div>
+                <span style="font-size:12px;color:var(--gray-400);font-family:var(--font-body);width:32px">1%</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px">
+                <span style="font-size:12px;color:var(--amber);width:18px">★1</span>
+                <div style="flex:1;height:10px;background:var(--gray-100);border-radius:5px;overflow:hidden"><div style="height:100%;width:0%"></div></div>
+                <span style="font-size:12px;color:var(--gray-400);font-family:var(--font-body);width:32px">0%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sticky-box">
+          <div class="card" style="margin-bottom:14px">
+            <div class="card-title">🏆 Niveau de confiance</div>
+            <div style="text-align:center;padding:10px 0 16px">
+              <div style="font-size:52px;margin-bottom:8px">🏆</div>
+              <div style="font-size:18px;font-weight:700;margin-bottom:4px">Niveau Expert</div>
+              <div style="font-size:12px;color:var(--gray-400);font-family:var(--font-body);margin-bottom:16px">Niveau le plus élevé sur BatiConnect</div>
+              <div class="prog-wrap" style="text-align:left;margin-bottom:0">
+                <div class="prog-row"><span>Score de confiance</span><span style="color:var(--teal);font-weight:700">96 / 100</span></div>
+                <div class="prog-bar"><div class="prog-fill pf-teal" style="width:96%"></div></div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:0">
+              <div class="info-row"><span class="info-row-label">Missions réussies</span><span>47 / 47</span></div>
+              <div class="info-row"><span class="info-row-label">Taux de ponctualité</span><span style="color:var(--teal)">96%</span></div>
+              <div class="info-row"><span class="info-row-label">Rapports envoyés</span><span style="color:var(--teal)">100% ✅</span></div>
+              <div class="info-row"><span class="info-row-label">Pénalités totales</span><span style="color:var(--teal)">0 FCFA</span></div>
+            </div>
+          </div>
+          <button class="btn btn-orange btn-full" onclick="showPage('noter')">⭐ Laisser un avis</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- AVIS CLIENTS -->
+    <div id="tab-avis" style="display:none">
+      <div class="card">
+        <div class="card-title">💬 Avis clients (41) <button class="btn btn-outline" style="font-size:11px;padding:5px 12px" onclick="showPage('noter')">+ Laisser un avis</button></div>
+
+        <div class="avis-item">
+          <div class="avis-top">
+            <div class="avis-avatar av-b">MT</div>
+            <div class="avis-info">
+              <div class="avis-name">Marc Traoré <span style="color:var(--gray-400);font-size:11px;font-weight:400">&nbsp;· Paris, France</span></div>
+              <div class="avis-meta">Rénovation appartement F4 · Mars 2026</div>
+              <div class="avis-stars">★★★★★ <span style="color:var(--gray-400);font-size:11px">5.0</span></div>
+            </div>
+          </div>
+          <div class="avis-text">"Kofi est un artisan exceptionnel. Il a envoyé des photos chaque jour, respecté les délais et la qualité du travail est irréprochable. Je recommande vivement pour toute construction depuis la diaspora — vous pouvez lui faire confiance les yeux fermés."</div>
+          <div class="avis-tags"><span class="avis-tag">✅ Travail impeccable</span><span class="avis-tag">📷 Photos régulières</span><span class="avis-tag">⏱️ Délais respectés</span></div>
+          <div class="avis-reply"><div class="avis-reply-label">Réponse de Kofi A.</div>Merci beaucoup Marc ! Ce fut un plaisir de travailler sur votre beau projet. J'espère vous revoir pour de futurs travaux 🙏</div>
+        </div>
+
+        <div class="avis-item">
+          <div class="avis-top">
+            <div class="avis-avatar av-t">AD</div>
+            <div class="avis-info">
+              <div class="avis-name">Aminata Diallo <span style="color:var(--gray-400);font-size:11px;font-weight:400">&nbsp;· Montréal, Canada</span></div>
+              <div class="avis-meta">Villa 3 chambres · Janv. 2026</div>
+              <div class="avis-stars">★★★★★ <span style="color:var(--gray-400);font-size:11px">5.0</span></div>
+            </div>
+          </div>
+          <div class="avis-text">"Résultat parfait, suivi professionnel et disponibilité remarquable malgré le décalage horaire. La villa est magnifique, toute ma famille est satisfaite."</div>
+          <div class="avis-tags"><span class="avis-tag">🏠 Résultat parfait</span><span class="avis-tag">💬 Très réactif</span><span class="avis-tag">🌍 Parfait pour diaspora</span></div>
+        </div>
+
+        <div class="avis-item">
+          <div class="avis-top">
+            <div class="avis-avatar av-a">FK</div>
+            <div class="avis-info">
+              <div class="avis-name">Fatou Kouyaté <span style="color:var(--gray-400);font-size:11px;font-weight:400">&nbsp;· Cotonou</span></div>
+              <div class="avis-meta">Rénovation bureau · Déc. 2025</div>
+              <div class="avis-stars">★★★★☆ <span style="color:var(--gray-400);font-size:11px">4.2</span></div>
+            </div>
+          </div>
+          <div class="avis-text">"Très bon travail globalement. Quelques jours de retard sur la finition des peintures mais la qualité est là. Communication excellente."</div>
+          <div class="avis-tags"><span class="avis-tag">✅ Bonne qualité</span><span class="avis-tag">⚠️ Léger retard</span></div>
+          <div class="avis-reply"><div class="avis-reply-label">Réponse de Kofi A.</div>Merci Fatou. Je m'excuse pour ce petit retard sur les finitions — un imprévu sur l'approvisionnement en peinture. J'ai appris de cela pour mes futures missions.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CLASSEMENT -->
+    <div id="tab-classement" style="display:none">
+      <div class="card">
+        <div class="card-title">🏅 Top artisans BatiConnect — Bénin</div>
+        <div class="lb-item">
+          <div class="lb-rank gold">1</div>
+          <div class="lb-avatar av-o">KA</div>
+          <div class="lb-info"><div class="lb-name">Kofi Adetokunbo 👈 Vous</div><div class="lb-meta">Maçon · Cotonou · 47 missions</div></div>
+          <div class="lb-score"><div class="lb-score-val">★ 4.9</div><div class="lb-score-count">41 avis</div></div>
+        </div>
+        <div class="lb-item">
+          <div class="lb-rank silver">2</div>
+          <div class="lb-avatar av-t">MS</div>
+          <div class="lb-info"><div class="lb-name">Moussa Soumahoro</div><div class="lb-meta">Chef de chantier · Porto-Novo · 38 missions</div></div>
+          <div class="lb-score"><div class="lb-score-val">★ 4.7</div><div class="lb-score-count">33 avis</div></div>
+        </div>
+        <div class="lb-item">
+          <div class="lb-rank bronze">3</div>
+          <div class="lb-avatar av-a">AB</div>
+          <div class="lb-info"><div class="lb-name">Aïcha Balogun</div><div class="lb-meta">Architecte · Cotonou · 29 missions</div></div>
+          <div class="lb-score"><div class="lb-score-val">★ 4.6</div><div class="lb-score-count">27 avis</div></div>
+        </div>
+        <div class="lb-item">
+          <div class="lb-rank normal">4</div>
+          <div class="lb-avatar av-b">EK</div>
+          <div class="lb-info"><div class="lb-name">Emmanuel Kpata</div><div class="lb-meta">Électricien · Cotonou · 22 missions</div></div>
+          <div class="lb-score"><div class="lb-score-val">★ 4.5</div><div class="lb-score-count">19 avis</div></div>
+        </div>
+        <div class="lb-item">
+          <div class="lb-rank normal">5</div>
+          <div class="lb-avatar av-g" style="background:linear-gradient(135deg,#6B7280,#374151)">BN</div>
+          <div class="lb-info"><div class="lb-name">Bassirou Ndiaye</div><div class="lb-meta">Plombier · Parakou · 18 missions</div></div>
+          <div class="lb-score"><div class="lb-score-val">★ 4.4</div><div class="lb-score-count">15 avis</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTORIQUE PÉNALITÉS -->
+    <div id="tab-historique-pen" style="display:none">
+      <div class="alert alert-success"><span>✅</span><div><strong>Excellente nouvelle !</strong> Aucune pénalité active sur votre compte. Continuez à respecter les délais et la qualité.</div></div>
+      <div class="card">
+        <div class="card-title">📋 Historique des pénalités passées</div>
+        <div style="text-align:center;padding:30px;color:var(--gray-400);font-family:var(--font-body)">
+          <div style="font-size:36px;margin-bottom:12px">🎉</div>
+          <div style="font-size:14px;font-weight:600;color:var(--gray-900);margin-bottom:6px">Aucune pénalité enregistrée</div>
+          <div style="font-size:13px">Vous avez toujours respecté les délais et la qualité de vos missions.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════ PAGE 2 : NOTER UNE MISSION ════════════ -->
+<div class="page" id="page-noter">
+  <div class="container" style="max-width:640px">
+    <button class="btn btn-outline" style="margin-bottom:22px" onclick="showPage('profil')">← Retour</button>
+
+    <!-- Mission résumé -->
+    <div style="background:var(--white);border:1.5px solid var(--gray-100);border-radius:var(--radius-lg);padding:18px;margin-bottom:22px;display:flex;align-items:center;gap:14px">
+      <div style="width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--orange),var(--orange-dark));display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:white">KA</div>
+      <div>
+        <div style="font-size:14px;font-weight:700">Kofi Adetokunbo</div>
+        <div style="font-size:12px;color:var(--gray-400);font-family:var(--font-body)">Rénovation appartement F4 · Terminée le 13 Mars 2026</div>
+      </div>
+      <span class="badge badge-teal" style="margin-left:auto">✅ Validée</span>
+    </div>
+
+    <div class="alert alert-info"><span>💡</span><div>Votre avis est <strong>anonyme</strong> jusqu'à publication. Il aide les futurs clients à faire le bon choix.</div></div>
+
+    <div class="card">
+      <div class="card-title">⭐ Notez les 6 critères</div>
+      <div id="rating-form">
+        <div class="rating-group" id="rg-qualite">
+          <div class="rating-label">🏗️ Qualité du travail <span style="color:var(--gray-400);font-weight:400;font-size:12px" id="rl-qualite">Cliquez pour noter</span></div>
+          <div class="stars-row" data-cat="qualite">
+            <span class="star" onclick="rate('qualite',1)">★</span><span class="star" onclick="rate('qualite',2)">★</span><span class="star" onclick="rate('qualite',3)">★</span><span class="star" onclick="rate('qualite',4)">★</span><span class="star" onclick="rate('qualite',5)">★</span>
+          </div>
+        </div>
+        <div class="rating-group" id="rg-delai">
+          <div class="rating-label">⏱️ Respect des délais <span style="color:var(--gray-400);font-weight:400;font-size:12px" id="rl-delai">Cliquez pour noter</span></div>
+          <div class="stars-row" data-cat="delai">
+            <span class="star" onclick="rate('delai',1)">★</span><span class="star" onclick="rate('delai',2)">★</span><span class="star" onclick="rate('delai',3)">★</span><span class="star" onclick="rate('delai',4)">★</span><span class="star" onclick="rate('delai',5)">★</span>
+          </div>
+        </div>
+        <div class="rating-group" id="rg-commu">
+          <div class="rating-label">💬 Communication <span style="color:var(--gray-400);font-weight:400;font-size:12px" id="rl-commu">Cliquez pour noter</span></div>
+          <div class="stars-row" data-cat="commu">
+            <span class="star" onclick="rate('commu',1)">★</span><span class="star" onclick="rate('commu',2)">★</span><span class="star" onclick="rate('commu',3)">★</span><span class="star" onclick="rate('commu',4)">★</span><span class="star" onclick="rate('commu',5)">★</span>
+          </div>
+        </div>
+        <div class="rating-group" id="rg-pro">
+          <div class="rating-label">👔 Professionnalisme <span style="color:var(--gray-400);font-weight:400;font-size:12px" id="rl-pro">Cliquez pour noter</span></div>
+          <div class="stars-row" data-cat="pro">
+            <span class="star" onclick="rate('pro',1)">★</span><span class="star" onclick="rate('pro',2)">★</span><span class="star" onclick="rate('pro',3)">★</span><span class="star" onclick="rate('pro',4)">★</span><span class="star" onclick="rate('pro',5)">★</span>
+          </div>
+        </div>
+        <div class="rating-group" id="rg-proprete">
+          <div class="rating-label">🧹 Propreté du chantier <span style="color:var(--gray-400);font-weight:400;font-size:12px" id="rl-proprete">Cliquez pour noter</span></div>
+          <div class="stars-row" data-cat="proprete">
+            <span class="star" onclick="rate('proprete',1)">★</span><span class="star" onclick="rate('proprete',2)">★</span><span class="star" onclick="rate('proprete',3)">★</span><span class="star" onclick="rate('proprete',4)">★</span><span class="star" onclick="rate('proprete',5)">★</span>
+          </div>
+        </div>
+        <div class="rating-group" id="rg-rapports">
+          <div class="rating-label">📷 Rapports photo réguliers <span style="color:var(--gray-400);font-weight:400;font-size:12px" id="rl-rapports">Cliquez pour noter</span></div>
+          <div class="stars-row" data-cat="rapports">
+            <span class="star" onclick="rate('rapports',1)">★</span><span class="star" onclick="rate('rapports',2)">★</span><span class="star" onclick="rate('rapports',3)">★</span><span class="star" onclick="rate('rapports',4)">★</span><span class="star" onclick="rate('rapports',5)">★</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="background:var(--amber-light);border-radius:var(--radius-sm);padding:14px;margin:16px 0;display:flex;align-items:center;gap:10px">
+        <span style="font-size:22px">⭐</span>
+        <div>
+          <div style="font-size:14px;font-weight:700;color:var(--amber)">Note globale : <span id="note-globale">—</span></div>
+          <div style="font-size:11px;color:#633806;font-family:var(--font-body);margin-top:2px">Moyenne calculée automatiquement</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">💬 Votre avis écrit</div>
+      <div class="form-group">
+        <label class="form-label">Commentaire <span style="color:var(--orange)">*</span></label>
+        <textarea class="form-textarea" id="avis-text" placeholder="Décrivez votre expérience avec cet artisan : qualité du travail, suivi, communication, ce qui vous a surpris positivement ou négativement..." rows="4"></textarea>
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Points forts (choisissez ceux qui s'appliquent)</label>
+        <div class="tag-row">
+          <div class="tag-choice sel" onclick="toggleTag(this)">✅ Travail impeccable</div>
+          <div class="tag-choice sel" onclick="toggleTag(this)">📷 Photos régulières</div>
+          <div class="tag-choice" onclick="toggleTag(this)">⏱️ Délais respectés</div>
+          <div class="tag-choice" onclick="toggleTag(this)">💬 Très réactif</div>
+          <div class="tag-choice" onclick="toggleTag(this)">🌍 Idéal pour diaspora</div>
+          <div class="tag-choice" onclick="toggleTag(this)">💰 Bon rapport qualité/prix</div>
+          <div class="tag-choice" onclick="toggleTag(this)">🧹 Chantier propre</div>
+          <div class="tag-choice" onclick="toggleTag(this)">👔 Très professionnel</div>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-orange btn-full" onclick="showPage('avis-confirme')">✅ Publier mon avis →</button>
+    <div style="text-align:center;font-size:11px;color:var(--gray-400);font-family:var(--font-body);margin-top:10px">Votre avis sera vérifié et publié dans 24h par l'équipe BatiConnect</div>
+  </div>
+</div>
+
+<!-- ════════════ PAGE 3 : CONFIRMATION AVIS ════════════ -->
+<div class="page" id="page-avis-confirme">
+  <div class="container" style="max-width:480px;text-align:center;padding-top:60px">
+    <div style="width:80px;height:80px;border-radius:50%;background:var(--amber-light);display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 24px">⭐</div>
+    <div style="font-size:22px;font-weight:700;margin-bottom:10px">Merci pour votre avis !</div>
+    <div style="font-size:14px;color:var(--gray-600);font-family:var(--font-body);line-height:1.7;margin-bottom:28px">Votre avis a bien été reçu. Il sera vérifié et publié dans <strong>24h</strong>. Il aidera les futurs clients à faire confiance aux bons artisans.</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button class="btn btn-orange btn-full" onclick="showPage('profil')">Voir le profil de l'artisan</button>
+      <button class="btn btn-outline btn-full" onclick="showPage('penalites')">⚠️ Voir les pénalités</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ PAGE 4 : PÉNALITÉS ════════════ -->
+<div class="page" id="page-penalites">
+  <div class="container">
+    <button class="btn btn-outline" style="margin-bottom:22px" onclick="showPage('profil')">← Retour</button>
+    <div style="font-size:22px;font-weight:700;margin-bottom:4px">⚠️ Système de pénalités automatiques</div>
+    <div style="font-size:14px;color:var(--gray-400);font-family:var(--font-body);margin-bottom:24px">Les pénalités protègent les clients et responsabilisent les artisans</div>
+
+    <div class="alert alert-warning"><span>⚠️</span><div>Les pénalités sont calculées et appliquées <strong>automatiquement</strong> selon le contrat numérique signé. Elles sont déduites du paiement final avant versement à l'artisan.</div></div>
+
+    <div class="card">
+      <div class="card-title">📋 Grille des pénalités</div>
+      <table class="pen-table">
+        <thead>
+          <tr><th>Type d'infraction</th><th>Calcul</th><th>Plafond</th><th>Sévérité</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Retard de livraison</strong><br><span style="font-size:11px;color:var(--gray-400)">Chaque jour au-delà de la date convenue</span></td>
+            <td><strong>0.5%</strong> du montant / jour</td>
+            <td>15% max</td>
+            <td><span class="pen-sev low"></span>Faible</td>
+          </tr>
+          <tr>
+            <td><strong>Manque de rapports photo</strong><br><span style="font-size:11px;color:var(--gray-400)">Rapport manqué sans justification</span></td>
+            <td><strong>5 000 FCFA</strong> / rapport manqué</td>
+            <td>3% max</td>
+            <td><span class="pen-sev low"></span>Faible</td>
+          </tr>
+          <tr>
+            <td><strong>Travail non conforme</strong><br><span style="font-size:11px;color:var(--gray-400)">Qualité inférieure aux specs du contrat</span></td>
+            <td><strong>5 à 20%</strong> selon gravité</td>
+            <td>20% max</td>
+            <td><span class="pen-sev med"></span>Moyen</td>
+          </tr>
+          <tr>
+            <td><strong>Utilisation de matériaux incorrects</strong><br><span style="font-size:11px;color:var(--gray-400)">Remplacement non autorisé par le client</span></td>
+            <td><strong>10%</strong> + remboursement différence</td>
+            <td>25% max</td>
+            <td><span class="pen-sev med"></span>Moyen</td>
+          </tr>
+          <tr>
+            <td><strong>Sous-traitance non déclarée</strong><br><span style="font-size:11px;color:var(--gray-400)">Délégation à un tiers sans accord</span></td>
+            <td><strong>15%</strong> du montant total</td>
+            <td>15% fixe</td>
+            <td><span class="pen-sev high"></span>Élevé</td>
+          </tr>
+          <tr>
+            <td><strong>Abandon de chantier</strong><br><span style="font-size:11px;color:var(--gray-400)">Arrêt des travaux sans accord préalable</span></td>
+            <td><strong>100%</strong> remboursé au client</td>
+            <td>100% (+ suspension)</td>
+            <td><span class="pen-sev high"></span>Critique</td>
+          </tr>
+          <tr>
+            <td><strong>Fraude documentaire</strong><br><span style="font-size:11px;color:var(--gray-400)">Faux rapports, photos fabriquées</span></td>
+            <td><strong>100%</strong> + bannissement</td>
+            <td>Compte banni définitivement</td>
+            <td><span class="pen-sev high"></span>Critique</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🛡️ Protections pour l'artisan</div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;gap:12px;padding:14px;background:var(--teal-light);border-radius:var(--radius-md)">
+          <span style="font-size:20px">⚖️</span>
+          <div><div style="font-size:13px;font-weight:600;margin-bottom:3px">Arbitrage équitable</div><div style="font-size:12px;color:var(--teal-dark);font-family:var(--font-body)">En cas de désaccord, l'artisan peut contester une pénalité. Notre équipe examine les preuves des deux côtés sous 48h.</div></div>
+        </div>
+        <div style="display:flex;gap:12px;padding:14px;background:var(--blue-light);border-radius:var(--radius-md)">
+          <span style="font-size:20px">📋</span>
+          <div><div style="font-size:13px;font-weight:600;margin-bottom:3px">Force majeure reconnue</div><div style="font-size:12px;color:var(--blue);font-family:var(--font-body)">Les événements imprévisibles (intempéries, grèves, problèmes d'approvisionnement documentés) peuvent suspendre les pénalités.</div></div>
+        </div>
+        <div style="display:flex;gap:12px;padding:14px;background:var(--amber-light);border-radius:var(--radius-md)">
+          <span style="font-size:20px">🔔</span>
+          <div><div style="font-size:13px;font-weight:600;margin-bottom:3px">Alertes préventives</div><div style="font-size:12px;color:#633806;font-family:var(--font-body)">L'artisan reçoit une notification 3 jours avant qu'une pénalité soit appliquée, lui donnant le temps de remédier à la situation.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const ratings = {};
+  const labels = { qualite:'Qualité du travail', delai:'Respect des délais', commu:'Communication', pro:'Professionnalisme', proprete:'Propreté', rapports:'Rapports photo' };
+  const scores = { 1:'Insuffisant', 2:'Passable', 3:'Bien', 4:'Très bien', 5:'Excellent !' };
+
+  function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const p = document.getElementById('page-' + id);
+    if (p) { p.classList.add('active'); window.scrollTo({top:0,behavior:'smooth'}); }
+  }
+
+  function setTab(btn, tabId) {
+    btn.closest('.tabs').querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    ['notes','avis','classement','historique-pen'].forEach(id => {
+      const el = document.getElementById('tab-' + id);
+      if (el) el.style.display = id === tabId ? 'block' : 'none';
+    });
+  }
+
+  function rate(cat, val) {
+    ratings[cat] = val;
+    const row = document.querySelector(`.stars-row[data-cat="${cat}"]`);
+    if (row) {
+      row.querySelectorAll('.star').forEach((s, i) => {
+        s.classList.toggle('active', i < val);
+      });
+    }
+    const lbl = document.getElementById('rl-' + cat);
+    if (lbl) lbl.textContent = `${val}/5 — ${scores[val]}`;
+
+    // Update global score
+    const vals = Object.values(ratings);
+    if (vals.length > 0) {
+      const avg = (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1);
+      const el = document.getElementById('note-globale');
+      if (el) {
+        el.textContent = avg + '/5';
+        el.style.color = avg >= 4.5 ? 'var(--teal)' : avg >= 3 ? 'var(--amber)' : 'var(--red)';
+      }
+    }
+  }
+
+  function toggleTag(el) { el.classList.toggle('sel'); }
+</script>
+</body>
+</html>

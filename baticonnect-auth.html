@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BatiConnect — Connexion & Sécurité</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const db = supabase.createClient("https://qlpsantpdtarnrqnjmik.supabase.co", "sb_publishable_7TrwU7Q2o69F1R6xKy3-Qg_jvCgSElW");
+  function toast(msg, type) {
+    var colors = {success:"#1D9E75", error:"#A32D2D", info:"#D85A30"};
+    var icons  = {success:"&#x2705;", error:"&#x274C;", info:"&#x1F4A1;"};
+    type = type || "success";
+    var el = document.createElement("div");
+    el.style.cssText = "position:fixed;bottom:24px;right:24px;z-index:9999;background:#fff;border-left:4px solid " + (colors[type]||"#1D9E75") + ";padding:14px 18px;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.15);font-family:Sora,sans-serif;font-size:13px;display:flex;align-items:center;gap:10px;max-width:340px";
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(function(){ el.remove(); }, 3500);
+  }
+  async function getUser() {
+    var r = await db.auth.getUser();
+    return r.data.user;
+  }
+  function fmtFCFA(n) {
+    return new Intl.NumberFormat("fr-FR").format(n) + " FCFA";
+  }
+</script>
+<style>@keyframes toastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}</style>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --orange: #D85A30; --orange-light: #FAECE7; --orange-dark: #993C1D; --orange-mid: #F0997B;
+    --teal: #1D9E75; --teal-light: #E1F5EE; --teal-dark: #085041;
+    --amber: #BA7517; --amber-light: #FAEEDA;
+    --red: #A32D2D; --red-light: #FCEBEB;
+    --gray-50: #F9F8F5; --gray-100: #F1EFE8; --gray-200: #D3D1C7;
+    --gray-400: #888780; --gray-600: #5F5E5A; --gray-900: #2C2C2A;
+    --white: #FFFFFF;
+    --font: 'Sora', sans-serif; --font-body: 'DM Sans', sans-serif;
+    --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px; --radius-xl: 24px;
+    --shadow-sm: 0 1px 4px rgba(0,0,0,0.07); --shadow-md: 0 4px 20px rgba(0,0,0,0.09);
+    --shadow-lg: 0 8px 40px rgba(0,0,0,0.13);
+  }
+  body { font-family: var(--font); background: var(--gray-50); color: var(--gray-900); min-height: 100vh; }
+
+  /* ── LAYOUT ── */
+  .auth-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 100vh;
+  }
+  .auth-left {
+    background: linear-gradient(145deg, #1a0f0a 0%, var(--orange-dark) 40%, #D87040 70%, var(--teal-dark) 100%);
+    padding: 48px 56px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+  }
+  .auth-left::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 300px; height: 300px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.05);
+  }
+  .auth-left::after {
+    content: '';
+    position: absolute;
+    bottom: -60px; left: -60px;
+    width: 220px; height: 220px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+  }
+  .left-logo { display: flex; align-items: center; gap: 12px; position: relative; z-index: 1; }
+  .left-logo-icon {
+    width: 44px; height: 44px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(8px);
+  }
+  .left-logo-icon svg { width: 22px; height: 22px; fill: white; }
+  .left-logo-text { font-size: 20px; font-weight: 700; color: white; }
+  .left-logo-text span { color: rgba(255,255,255,0.6); }
+  .left-content { position: relative; z-index: 1; }
+  .left-tagline {
+    font-size: 32px; font-weight: 700; color: white; line-height: 1.25; margin-bottom: 20px;
+  }
+  .left-tagline span { color: rgba(255,220,200,0.9); }
+  .left-desc { font-size: 14px; color: rgba(255,255,255,0.7); font-family: var(--font-body); line-height: 1.7; margin-bottom: 36px; }
+  .trust-items { display: flex; flex-direction: column; gap: 14px; }
+  .trust-item { display: flex; align-items: center; gap: 12px; }
+  .trust-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: rgba(255,255,255,0.12);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
+  }
+  .trust-text { font-size: 13px; color: rgba(255,255,255,0.85); font-family: var(--font-body); line-height: 1.5; }
+  .trust-text strong { color: white; }
+  .left-footer { font-size: 11px; color: rgba(255,255,255,0.4); font-family: var(--font-body); position: relative; z-index: 1; }
+
+  /* ── PANNEAU DROIT ── */
+  .auth-right {
+    display: flex; align-items: center; justify-content: center;
+    padding: 40px 32px;
+    overflow-y: auto;
+  }
+  .auth-box { width: 100%; max-width: 420px; }
+
+  /* Pages */
+  .auth-page { display: none; }
+  .auth-page.active { display: block; }
+
+  .auth-title { font-size: 24px; font-weight: 700; color: var(--gray-900); margin-bottom: 6px; }
+  .auth-subtitle { font-size: 14px; color: var(--gray-600); font-family: var(--font-body); line-height: 1.6; margin-bottom: 28px; }
+  .auth-subtitle a { color: var(--orange); text-decoration: none; font-weight: 500; }
+
+  /* Tabs */
+  .role-tabs { display: flex; background: var(--gray-100); border-radius: var(--radius-md); padding: 4px; margin-bottom: 28px; }
+  .role-tab {
+    flex: 1; padding: 9px 12px; border-radius: 10px;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    border: none; background: transparent; color: var(--gray-600);
+    font-family: var(--font); transition: all 0.2s; text-align: center;
+  }
+  .role-tab.active { background: var(--white); color: var(--orange); box-shadow: var(--shadow-sm); }
+
+  /* Form elements */
+  .form-group { margin-bottom: 18px; }
+  .form-label { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 500; color: var(--gray-900); margin-bottom: 8px; }
+  .form-label a { font-size: 12px; color: var(--orange); text-decoration: none; font-weight: 400; }
+  .input-wrap { position: relative; }
+  .form-input {
+    width: 100%; padding: 12px 16px; border: 1.5px solid var(--gray-200);
+    border-radius: var(--radius-sm); font-size: 14px; font-family: var(--font-body);
+    color: var(--gray-900); background: var(--white);
+    transition: border-color 0.2s, box-shadow 0.2s; outline: none;
+  }
+  .form-input:focus { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(216,90,48,0.1); }
+  .form-input.error { border-color: var(--red); box-shadow: 0 0 0 3px rgba(163,45,45,0.1); }
+  .form-input.success { border-color: var(--teal); }
+  .form-input-icon { padding-left: 44px; }
+  .input-icon {
+    position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+    font-size: 16px; pointer-events: none;
+  }
+  .input-toggle {
+    position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+    cursor: pointer; font-size: 14px; color: var(--gray-400);
+    border: none; background: none; padding: 0;
+  }
+  .input-toggle:hover { color: var(--orange); }
+  .field-hint { font-size: 11px; color: var(--gray-400); margin-top: 5px; font-family: var(--font-body); }
+  .field-error { font-size: 11px; color: var(--red); margin-top: 5px; font-family: var(--font-body); display: none; }
+  .field-error.show { display: block; }
+
+  /* Password strength */
+  .pw-strength { margin-top: 8px; }
+  .pw-bars { display: flex; gap: 4px; margin-bottom: 5px; }
+  .pw-bar { flex: 1; height: 3px; border-radius: 2px; background: var(--gray-200); transition: background 0.3s; }
+  .pw-bar.weak { background: var(--red); }
+  .pw-bar.medium { background: var(--amber); }
+  .pw-bar.strong { background: var(--teal); }
+  .pw-label { font-size: 11px; color: var(--gray-400); font-family: var(--font-body); }
+  .pw-label.weak { color: var(--red); }
+  .pw-label.medium { color: var(--amber); }
+  .pw-label.strong { color: var(--teal); }
+
+  /* Checkbox */
+  .checkbox-group { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 20px; }
+  .checkbox-group input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--orange); margin-top: 2px; flex-shrink: 0; cursor: pointer; }
+  .checkbox-label { font-size: 13px; color: var(--gray-600); font-family: var(--font-body); line-height: 1.5; }
+  .checkbox-label a { color: var(--orange); text-decoration: none; }
+
+  /* Buttons */
+  .btn-auth {
+    width: 100%; padding: 14px; border-radius: var(--radius-md);
+    font-size: 15px; font-weight: 600; cursor: pointer; border: none;
+    font-family: var(--font); transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-primary { background: var(--orange); color: white; }
+  .btn-primary:hover { background: var(--orange-dark); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(216,90,48,0.35); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-outline {
+    background: var(--white); color: var(--gray-600);
+    border: 1.5px solid var(--gray-200); margin-top: 10px;
+  }
+  .btn-outline:hover { border-color: var(--orange); color: var(--orange); }
+  .btn-teal { background: var(--teal); color: white; }
+  .btn-teal:hover { background: var(--teal-dark); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(29,158,117,0.35); }
+
+  /* Divider */
+  .divider { display: flex; align-items: center; gap: 12px; margin: 24px 0; }
+  .divider-line { flex: 1; height: 1px; background: var(--gray-200); }
+  .divider-text { font-size: 12px; color: var(--gray-400); font-family: var(--font-body); white-space: nowrap; }
+
+  /* Social buttons */
+  .social-btns { display: flex; gap: 10px; }
+  .social-btn {
+    flex: 1; padding: 11px; border: 1.5px solid var(--gray-200);
+    border-radius: var(--radius-sm); cursor: pointer; background: var(--white);
+    font-size: 13px; font-weight: 500; font-family: var(--font);
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    color: var(--gray-600); transition: all 0.2s;
+  }
+  .social-btn:hover { border-color: var(--orange); color: var(--gray-900); }
+  .social-icon { font-size: 18px; }
+
+  /* Alert */
+  .alert {
+    padding: 12px 16px; border-radius: var(--radius-sm);
+    font-size: 13px; font-family: var(--font-body); line-height: 1.5;
+    margin-bottom: 20px; display: flex; align-items: flex-start; gap: 10px;
+    border: 1px solid transparent;
+  }
+  .alert-error { background: var(--red-light); color: var(--red); border-color: #F7C1C1; }
+  .alert-success { background: var(--teal-light); color: var(--teal-dark); border-color: #9FE1CB; }
+  .alert-info { background: var(--orange-light); color: var(--orange-dark); border-color: var(--orange-mid); }
+  .alert-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+  /* 2FA code input */
+  .code-inputs { display: flex; gap: 10px; justify-content: center; margin: 28px 0; }
+  .code-input {
+    width: 52px; height: 60px; border: 2px solid var(--gray-200);
+    border-radius: var(--radius-sm); text-align: center;
+    font-size: 24px; font-weight: 700; font-family: var(--font);
+    color: var(--gray-900); background: var(--white);
+    outline: none; transition: all 0.2s;
+  }
+  .code-input:focus { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(216,90,48,0.1); }
+  .code-input.filled { border-color: var(--teal); background: var(--teal-light); color: var(--teal-dark); }
+  .code-resend { text-align: center; font-size: 13px; color: var(--gray-400); font-family: var(--font-body); margin-top: 16px; }
+  .code-resend a { color: var(--orange); text-decoration: none; cursor: pointer; }
+  .code-timer { font-weight: 600; color: var(--orange); }
+
+  /* Success state */
+  .success-circle {
+    width: 72px; height: 72px; border-radius: 50%;
+    background: var(--teal-light); display: flex; align-items: center; justify-content: center;
+    font-size: 32px; margin: 0 auto 20px;
+  }
+
+  /* Auth footer */
+  .auth-footer {
+    text-align: center; margin-top: 24px;
+    font-size: 13px; color: var(--gray-400); font-family: var(--font-body);
+  }
+  .auth-footer a { color: var(--orange); text-decoration: none; font-weight: 500; cursor: pointer; }
+
+  /* Progress bar (loading) */
+  .btn-loading { position: relative; overflow: hidden; opacity: 0.85; cursor: wait; }
+  .btn-loading::after {
+    content: '';
+    position: absolute; left: -100%; top: 0; bottom: 0; width: 40%;
+    background: rgba(255,255,255,0.25);
+    animation: shimmer 1s infinite;
+  }
+  @keyframes shimmer { to { left: 200%; } }
+
+  /* Security badge */
+  .security-badge {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--gray-100); border-radius: var(--radius-sm);
+    padding: 10px 14px; margin-top: 20px;
+    font-size: 12px; color: var(--gray-600); font-family: var(--font-body);
+  }
+  .security-badge-icon { font-size: 14px; }
+
+  /* Session info */
+  .session-card {
+    background: var(--white); border: 1px solid var(--gray-200);
+    border-radius: var(--radius-md); padding: 16px; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .session-icon { font-size: 24px; }
+  .session-info { flex: 1; }
+  .session-name { font-size: 13px; font-weight: 500; color: var(--gray-900); }
+  .session-meta { font-size: 11px; color: var(--gray-400); font-family: var(--font-body); margin-top: 2px; }
+  .session-current { font-size: 10px; font-weight: 600; color: var(--teal); background: var(--teal-light); padding: 3px 8px; border-radius: 20px; }
+  .session-revoke {
+    font-size: 12px; color: var(--red); cursor: pointer;
+    border: none; background: none; font-family: var(--font); padding: 6px;
+  }
+  .session-revoke:hover { text-decoration: underline; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .auth-layout { grid-template-columns: 1fr; }
+    .auth-left { display: none; }
+    .auth-right { padding: 32px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="auth-layout">
+
+  <!-- ── GAUCHE ── -->
+  <div class="auth-left">
+    <div class="left-logo">
+      <div class="left-logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22" fill="none" stroke="white" stroke-width="1.5"/></svg>
+      </div>
+      <div class="left-logo-text">Bati<span>Connect</span></div>
+    </div>
+
+    <div class="left-content">
+      <div class="left-tagline">
+        Votre projet de construction<br><span>entre de bonnes mains</span>
+      </div>
+      <div class="left-desc">
+        Connectez-vous pour accéder à votre espace sécurisé et gérer vos projets, vos artisans et vos paiements en toute confiance.
+      </div>
+      <div class="trust-items">
+        <div class="trust-item">
+          <div class="trust-icon">🔒</div>
+          <div class="trust-text"><strong>Connexion sécurisée</strong><br>Chiffrement SSL + authentification à deux facteurs</div>
+        </div>
+        <div class="trust-item">
+          <div class="trust-icon">💳</div>
+          <div class="trust-text"><strong>Paiements protégés</strong><br>Système ESCROW — l'argent libéré après validation</div>
+        </div>
+        <div class="trust-item">
+          <div class="trust-icon">📍</div>
+          <div class="trust-text"><strong>Suivi en temps réel</strong><br>Surveillez votre chantier depuis n'importe où</div>
+        </div>
+        <div class="trust-item">
+          <div class="trust-icon">✔️</div>
+          <div class="trust-text"><strong>Artisans vérifiés</strong><br>Chaque prestataire est contrôlé par notre équipe</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="left-footer">© 2025 BatiConnect · Tous droits réservés · Afrique de l'Ouest</div>
+  </div>
+
+  <!-- ── DROITE ── -->
+  <div class="auth-right">
+    <div class="auth-box">
+
+      <!-- ══ PAGE 1 : CONNEXION ══ -->
+      <div class="auth-page active" id="page-login">
+        <div class="auth-title">Bon retour 👋</div>
+        <div class="auth-subtitle">Connectez-vous à votre compte BatiConnect.<br><a href="#" onclick="showAuth('register')">Pas encore inscrit ? Créer un compte</a></div>
+
+        <div class="role-tabs">
+          <button class="role-tab active" onclick="setRole(this,'demandeur')">🏗️ Demandeur</button>
+          <button class="role-tab" onclick="setRole(this,'prestataire')">🔧 Prestataire</button>
+          <button class="role-tab" onclick="setRole(this,'admin')">⚙️ Admin</button>
+        </div>
+
+        <div id="alert-login" class="alert alert-error" style="display:none">
+          <span class="alert-icon">⚠️</span>
+          <span id="alert-login-msg">Email ou mot de passe incorrect.</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Adresse email</label>
+          <div class="input-wrap">
+            <span class="input-icon">📧</span>
+            <input class="form-input form-input-icon" type="email" id="login-email" placeholder="votre@email.com" oninput="clearAlert('alert-login')">
+          </div>
+          <div class="field-error" id="err-login-email">Veuillez saisir une adresse email valide.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">
+            Mot de passe
+            <a href="#" onclick="showAuth('forgot')">Mot de passe oublié ?</a>
+          </label>
+          <div class="input-wrap">
+            <span class="input-icon">🔑</span>
+            <input class="form-input form-input-icon" type="password" id="login-pw" placeholder="Votre mot de passe" style="padding-right:48px" oninput="clearAlert('alert-login')">
+            <button class="input-toggle" onclick="togglePw('login-pw',this)" type="button">👁️</button>
+          </div>
+          <div class="field-error" id="err-login-pw">Veuillez saisir votre mot de passe.</div>
+        </div>
+
+        <div class="checkbox-group">
+          <input type="checkbox" id="remember" checked>
+          <label class="checkbox-label" for="remember">Rester connecté sur cet appareil</label>
+        </div>
+
+        <button class="btn-auth btn-primary" id="btn-login" onclick="doLogin()">
+          Se connecter
+        </button>
+
+        <div class="divider">
+          <div class="divider-line"></div>
+          <span class="divider-text">ou continuer avec</span>
+          <div class="divider-line"></div>
+        </div>
+
+        <div class="social-btns">
+          <button class="social-btn"><span class="social-icon">🌐</span> Google</button>
+          <button class="social-btn"><span class="social-icon">📱</span> WhatsApp</button>
+          <button class="social-btn"><span class="social-icon">📘</span> Facebook</button>
+        </div>
+
+        <div class="security-badge">
+          <span class="security-badge-icon">🛡️</span>
+          Connexion chiffrée SSL 256 bits · Vos données sont protégées
+        </div>
+      </div>
+
+      <!-- ══ PAGE 2 : INSCRIPTION ══ -->
+      <div class="auth-page" id="page-register">
+        <div class="auth-title">Créer un compte</div>
+        <div class="auth-subtitle">Rejoignez BatiConnect gratuitement.<br><a href="#" onclick="showAuth('login')">Déjà inscrit ? Se connecter</a></div>
+
+        <div class="role-tabs">
+          <button class="role-tab active" onclick="setRole(this,'demandeur')">🏗️ Demandeur</button>
+          <button class="role-tab" onclick="setRole(this,'prestataire')">🔧 Prestataire</button>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Prénom & Nom</label>
+          <div class="input-wrap">
+            <span class="input-icon">👤</span>
+            <input class="form-input form-input-icon" id="reg-nom-complet" type="text" placeholder="Ex : Kofi Adetokunbo">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <div class="input-wrap">
+            <span class="input-icon">📧</span>
+            <input class="form-input form-input-icon" id="reg-email" type="email" placeholder="votre@email.com">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Téléphone / WhatsApp</label>
+          <div class="input-wrap">
+            <span class="input-icon">📞</span>
+            <input class="form-input form-input-icon" id="reg-tel" type="tel" placeholder="+229 XX XX XX XX">
+          </div>
+          <div class="field-hint">Utilisé pour la vérification en 2 étapes et les notifications</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Mot de passe</label>
+          <div class="input-wrap">
+            <span class="input-icon">🔑</span>
+            <input class="form-input form-input-icon" type="password" id="reg-pw" placeholder="Minimum 8 caractères" style="padding-right:48px" oninput="checkPwStrength(this.value)">
+            <button class="input-toggle" onclick="togglePw('reg-pw',this)" type="button">👁️</button>
+          </div>
+          <div class="pw-strength">
+            <div class="pw-bars">
+              <div class="pw-bar" id="bar1"></div>
+              <div class="pw-bar" id="bar2"></div>
+              <div class="pw-bar" id="bar3"></div>
+              <div class="pw-bar" id="bar4"></div>
+            </div>
+            <div class="pw-label" id="pw-label">Saisissez un mot de passe</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Confirmer le mot de passe</label>
+          <div class="input-wrap">
+            <span class="input-icon">🔑</span>
+            <input class="form-input form-input-icon" id="reg-pw2" type="password" placeholder="Répétez le mot de passe" style="padding-right:48px">
+          </div>
+        </div>
+
+        <div class="checkbox-group">
+          <input type="checkbox" id="terms" checked>
+          <label class="checkbox-label" for="terms">
+            J'accepte les <a href="#">Conditions d'utilisation</a> et la <a href="#">Politique de confidentialité</a> de BatiConnect
+          </label>
+        </div>
+
+        <div class="checkbox-group" style="margin-top:-8px">
+          <input type="checkbox" id="newsletter">
+          <label class="checkbox-label" for="newsletter">
+            Recevoir les notifications de nouvelles missions et offres par email
+          </label>
+        </div>
+
+        <button class="btn-auth btn-primary" id="btn-register" onclick="doRegister()">
+          Créer mon compte →
+        </button>
+
+        <div class="security-badge">
+          <span class="security-badge-icon">🛡️</span>
+          Vos données ne seront jamais vendues à des tiers
+        </div>
+
+        <div class="auth-footer">
+          Déjà inscrit ? <a onclick="showAuth('login')">Se connecter</a>
+        </div>
+      </div>
+
+      <!-- ══ PAGE 3 : VÉRIFICATION EMAIL ══ -->
+      <div class="auth-page" id="page-verify-email">
+        <div style="text-align:center;margin-bottom:8px">
+          <div style="font-size:48px;margin-bottom:16px">📧</div>
+          <div class="auth-title">Vérifiez votre email</div>
+          <div class="auth-subtitle" style="text-align:center">
+            Nous avons envoyé un code de vérification à<br>
+            <strong style="color:var(--gray-900)"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="80f6eff4f2e5c0e5ede1e9ecaee3efed">[email&#160;protected]</a></strong>
+          </div>
+        </div>
+
+        <div class="alert alert-info">
+          <span class="alert-icon">ℹ️</span>
+          Vérifiez votre dossier spam si vous ne trouvez pas l'email.
+        </div>
+
+        <div style="text-align:center;font-size:13px;font-weight:500;color:var(--gray-600);margin-bottom:8px">Entrez le code à 6 chiffres</div>
+        <div class="code-inputs">
+          <input class="code-input" type="text" maxlength="1" oninput="moveToNext(this,0)" id="c0">
+          <input class="code-input" type="text" maxlength="1" oninput="moveToNext(this,1)" id="c1">
+          <input class="code-input" type="text" maxlength="1" oninput="moveToNext(this,2)" id="c2">
+          <input class="code-input" type="text" maxlength="1" oninput="moveToNext(this,3)" id="c3">
+          <input class="code-input" type="text" maxlength="1" oninput="moveToNext(this,4)" id="c4">
+          <input class="code-input" type="text" maxlength="1" oninput="checkAllFilled()" id="c5">
+        </div>
+
+        <button class="btn-auth btn-primary" id="btn-verify" onclick="showAuth('2fa')">
+          ✓ Vérifier le code
+        </button>
+        <div class="code-resend">
+          Vous n'avez pas reçu ? <a onclick="resendCode()">Renvoyer</a> · <span class="code-timer" id="timer">02:00</span>
+        </div>
+
+        <div class="auth-footer" style="margin-top:16px">
+          <a onclick="showAuth('login')">← Retour à la connexion</a>
+        </div>
+      </div>
+
+      <!-- ══ PAGE 4 : AUTHENTIFICATION 2 FACTEURS ══ -->
+      <div class="auth-page" id="page-2fa">
+        <div style="text-align:center;margin-bottom:8px">
+          <div style="font-size:44px;margin-bottom:14px">📱</div>
+          <div class="auth-title">Vérification en 2 étapes</div>
+          <div class="auth-subtitle" style="text-align:center">
+            Pour votre sécurité, entrez le code envoyé par SMS au<br>
+            <strong style="color:var(--gray-900)">+229 ●● ●● ●● 45</strong>
+          </div>
+        </div>
+
+        <div class="code-inputs">
+          <input class="code-input" type="text" maxlength="1" oninput="moveToNext2fa(this,0)" id="f0">
+          <input class="code-input" type="text" maxlength="1" oninput="moveToNext2fa(this,1)" id="f1">
+          <input class="code-input" type="text" maxlength="1" oninput="moveToNext2fa(this,2)" id="f2">
+          <input class="code-input" type="text" maxlength="1" oninput="moveToNext2fa(this,3)" id="f3">
+          <input class="code-input" type="text" maxlength="1" oninput="moveToNext2fa(this,4)" id="f4">
+          <input class="code-input" type="text" maxlength="1" oninput="check2faFilled()" id="f5">
+        </div>
+
+        <button class="btn-auth btn-primary" onclick="showAuth('success')">
+          🔓 Confirmer et accéder
+        </button>
+        <button class="btn-auth btn-outline" onclick="showAuth('2fa-alternatives')">
+          Autre méthode de vérification
+        </button>
+
+        <div class="code-resend">
+          Code expiré ? <a onclick="resendSMS()">Renvoyer par SMS</a>
+        </div>
+
+        <div class="security-badge" style="margin-top:20px">
+          <span class="security-badge-icon">🔐</span>
+          Authentification à deux facteurs activée sur votre compte
+        </div>
+      </div>
+
+      <!-- ══ PAGE 5 : ALTERNATIVES 2FA ══ -->
+      <div class="auth-page" id="page-2fa-alternatives">
+        <div class="auth-title">Autre vérification</div>
+        <div class="auth-subtitle">Choisissez une méthode alternative pour accéder à votre compte.</div>
+
+        <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:24px">
+          <div class="session-card" style="cursor:pointer;transition:all 0.2s" onclick="showAuth('2fa')">
+            <div class="session-icon">📧</div>
+            <div class="session-info">
+              <div class="session-name">Code par email</div>
+              <div class="session-meta">Envoyé à vo●●●●@gmail.com</div>
+            </div>
+            <span style="color:var(--orange);font-size:18px">›</span>
+          </div>
+          <div class="session-card" style="cursor:pointer;transition:all 0.2s" onclick="showAuth('2fa')">
+            <div class="session-icon">📱</div>
+            <div class="session-info">
+              <div class="session-name">Code WhatsApp</div>
+              <div class="session-meta">Envoyé sur WhatsApp au +229 ●● 45</div>
+            </div>
+            <span style="color:var(--orange);font-size:18px">›</span>
+          </div>
+          <div class="session-card" style="cursor:pointer;transition:all 0.2s">
+            <div class="session-icon">🔑</div>
+            <div class="session-info">
+              <div class="session-name">Code de secours</div>
+              <div class="session-meta">Utilisez l'un de vos 8 codes de récupération</div>
+            </div>
+            <span style="color:var(--orange);font-size:18px">›</span>
+          </div>
+        </div>
+
+        <button class="btn-auth btn-outline" onclick="showAuth('2fa')">← Retour</button>
+      </div>
+
+      <!-- ══ PAGE 6 : MOT DE PASSE OUBLIÉ ══ -->
+      <div class="auth-page" id="page-forgot">
+        <div class="auth-title">Mot de passe oublié</div>
+        <div class="auth-subtitle">Saisissez votre email et nous vous enverrons un lien de réinitialisation.</div>
+
+        <div class="form-group">
+          <label class="form-label">Adresse email</label>
+          <div class="input-wrap">
+            <span class="input-icon">📧</span>
+            <input class="form-input form-input-icon" id="reg-email" type="email" placeholder="votre@email.com">
+          </div>
+        </div>
+
+        <button class="btn-auth btn-primary" onclick="showAuth('forgot-sent')">
+          Envoyer le lien de réinitialisation
+        </button>
+        <button class="btn-auth btn-outline" onclick="showAuth('login')">
+          ← Retour à la connexion
+        </button>
+
+        <div class="auth-footer">
+          Vous vous souvenez ? <a onclick="showAuth('login')">Se connecter</a>
+        </div>
+      </div>
+
+      <!-- ══ PAGE 7 : EMAIL ENVOYÉ ══ -->
+      <div class="auth-page" id="page-forgot-sent">
+        <div style="text-align:center">
+          <div class="success-circle">✉️</div>
+          <div class="auth-title">Email envoyé !</div>
+          <div class="auth-subtitle" style="text-align:center;margin-bottom:28px">
+            Un lien de réinitialisation a été envoyé à votre adresse email.<br>
+            Il expire dans <strong style="color:var(--orange)">15 minutes</strong>.
+          </div>
+        </div>
+
+        <div class="alert alert-info">
+          <span class="alert-icon">💡</span>
+          <div>
+            <strong>Vous ne trouvez pas l'email ?</strong><br>
+            Vérifiez vos spams ou contactez le support : <strong><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="f88b8d8888978a8cb89a998c919b9796969d9b8cd6999e8a919b99">[email&#160;protected]</a></strong>
+          </div>
+        </div>
+
+        <button class="btn-auth btn-primary" onclick="showAuth('reset-pw')">
+          J'ai reçu le lien → Réinitialiser
+        </button>
+        <button class="btn-auth btn-outline" onclick="showAuth('forgot')">
+          Renvoyer l'email
+        </button>
+      </div>
+
+      <!-- ══ PAGE 8 : RÉINITIALISATION MDP ══ -->
+      <div class="auth-page" id="page-reset-pw">
+        <div class="auth-title">Nouveau mot de passe</div>
+        <div class="auth-subtitle">Choisissez un nouveau mot de passe sécurisé pour votre compte.</div>
+
+        <div class="form-group">
+          <label class="form-label">Nouveau mot de passe</label>
+          <div class="input-wrap">
+            <span class="input-icon">🔑</span>
+            <input class="form-input form-input-icon" type="password" id="new-pw" placeholder="Minimum 8 caractères" style="padding-right:48px" oninput="checkPwStrength(this.value)">
+            <button class="input-toggle" onclick="togglePw('new-pw',this)" type="button">👁️</button>
+          </div>
+          <div class="pw-strength">
+            <div class="pw-bars">
+              <div class="pw-bar" id="bar1"></div>
+              <div class="pw-bar" id="bar2"></div>
+              <div class="pw-bar" id="bar3"></div>
+              <div class="pw-bar" id="bar4"></div>
+            </div>
+            <div class="pw-label" id="pw-label">Saisissez un mot de passe</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Confirmer le nouveau mot de passe</label>
+          <div class="input-wrap">
+            <span class="input-icon">🔑</span>
+            <input class="form-input form-input-icon" type="password" placeholder="Répétez le nouveau mot de passe" style="padding-right:48px">
+          </div>
+        </div>
+
+        <div style="background:var(--gray-100);border-radius:var(--radius-sm);padding:14px;margin-bottom:20px">
+          <div style="font-size:12px;font-weight:600;color:var(--gray-600);margin-bottom:8px">Exigences du mot de passe :</div>
+          <div style="font-size:12px;color:var(--gray-600);font-family:var(--font-body);display:flex;flex-direction:column;gap:4px">
+            <span>✓ Minimum 8 caractères</span>
+            <span>✓ Au moins une majuscule</span>
+            <span>✓ Au moins un chiffre</span>
+            <span>✓ Au moins un caractère spécial (!@#$)</span>
+          </div>
+        </div>
+
+        <button class="btn-auth btn-primary" onclick="showAuth('success')">
+          Réinitialiser le mot de passe →
+        </button>
+      </div>
+
+      <!-- ══ PAGE 9 : SUCCÈS CONNEXION ══ -->
+      <div class="auth-page" id="page-success">
+        <div style="text-align:center">
+          <div class="success-circle">✅</div>
+          <div class="auth-title">Connexion réussie !</div>
+          <div class="auth-subtitle" style="text-align:center;margin-bottom:20px">
+            Bienvenue sur BatiConnect.<br>Vous êtes maintenant connecté en toute sécurité.
+          </div>
+        </div>
+
+        <div class="alert alert-success">
+          <span class="alert-icon">🔐</span>
+          <div>Connexion vérifiée par authentification à 2 facteurs · Sesion sécurisée active</div>
+        </div>
+
+        <div style="background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-md);padding:16px;margin-bottom:24px">
+          <div style="font-size:12px;font-weight:600;color:var(--gray-400);margin-bottom:12px">SESSIONS ACTIVES</div>
+          <div class="session-card" style="border:none;padding:0;margin-bottom:10px">
+            <div class="session-icon">💻</div>
+            <div class="session-info">
+              <div class="session-name">Chrome · Windows 11</div>
+              <div class="session-meta">Cotonou, Bénin · Maintenant</div>
+            </div>
+            <span class="session-current">Actuel</span>
+          </div>
+          <div class="session-card" style="border:none;padding:0;padding-top:10px;border-top:1px solid var(--gray-100)">
+            <div class="session-icon">📱</div>
+            <div class="session-info">
+              <div class="session-name">Samsung Galaxy · Android</div>
+              <div class="session-meta">Cotonou, Bénin · Il y a 2 jours</div>
+            </div>
+            <button class="session-revoke">Révoquer</button>
+          </div>
+        </div>
+
+        <button class="btn-auth btn-primary" onclick="showAuth('login')">
+          Aller à mon tableau de bord →
+        </button>
+        <button class="btn-auth btn-outline" onclick="showAuth('security')">
+          ⚙️ Paramètres de sécurité
+        </button>
+      </div>
+
+      <!-- ══ PAGE 10 : PARAMÈTRES SÉCURITÉ ══ -->
+      <div class="auth-page" id="page-security">
+        <div class="auth-title">Sécurité du compte</div>
+        <div class="auth-subtitle">Gérez les options de sécurité de votre compte BatiConnect.</div>
+
+        <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:24px">
+          <div style="background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-md);padding:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+              <div style="font-size:14px;font-weight:500">📱 Authentification 2 facteurs</div>
+              <div style="background:var(--teal-light);color:var(--teal-dark);font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px">Activée</div>
+            </div>
+            <div style="font-size:12px;color:var(--gray-600);font-family:var(--font-body)">Via SMS au +229 ●● ●● ●● 45</div>
+          </div>
+
+          <div style="background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-md);padding:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+              <div style="font-size:14px;font-weight:500">🔑 Mot de passe</div>
+              <button class="session-revoke" style="color:var(--orange)" onclick="showAuth('reset-pw')">Modifier</button>
+            </div>
+            <div style="font-size:12px;color:var(--gray-600);font-family:var(--font-body)">Dernière modification : il y a 3 mois</div>
+          </div>
+
+          <div style="background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-md);padding:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+              <div style="font-size:14px;font-weight:500">📋 Sessions actives</div>
+              <span style="font-size:13px;font-weight:600;color:var(--orange)">2</span>
+            </div>
+            <div class="session-card" style="border:none;padding:0;margin-bottom:8px">
+              <div class="session-icon" style="font-size:18px">💻</div>
+              <div class="session-info">
+                <div class="session-name" style="font-size:12px">Chrome · Windows</div>
+                <div class="session-meta">Maintenant</div>
+              </div>
+              <span class="session-current">Actuel</span>
+            </div>
+            <div class="session-card" style="border:none;padding:0;border-top:1px solid var(--gray-100);padding-top:8px">
+              <div class="session-icon" style="font-size:18px">📱</div>
+              <div class="session-info">
+                <div class="session-name" style="font-size:12px">Android · Samsung</div>
+                <div class="session-meta">Il y a 2 jours</div>
+              </div>
+              <button class="session-revoke">Révoquer</button>
+            </div>
+          </div>
+
+          <div style="background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-md);padding:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+              <div style="font-size:14px;font-weight:500">🔒 Codes de secours</div>
+              <button class="session-revoke" style="color:var(--orange)">Générer</button>
+            </div>
+            <div style="font-size:12px;color:var(--gray-600);font-family:var(--font-body)">8 codes disponibles · Utilisez-les si vous perdez l'accès à votre téléphone</div>
+          </div>
+
+          <div style="background:var(--red-light);border:1px solid #F7C1C1;border-radius:var(--radius-md);padding:16px">
+            <div style="font-size:14px;font-weight:500;color:var(--red);margin-bottom:6px">🚫 Zone dangereuse</div>
+            <div style="font-size:12px;color:var(--red);font-family:var(--font-body);margin-bottom:12px">La suppression de votre compte est irréversible.</div>
+            <button style="background:none;border:1.5px solid var(--red);color:var(--red);padding:8px 16px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font)">Supprimer mon compte</button>
+          </div>
+        </div>
+
+        <button class="btn-auth btn-outline" onclick="showAuth('success')">← Retour</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+  // Navigation entre pages
+  function showAuth(id) {
+    document.querySelectorAll('.auth-page').forEach(p => p.classList.remove('active'));
+    const page = document.getElementById('page-' + id);
+    if (page) page.classList.add('active');
+  }
+
+  // Rôles
+  function setRole(btn, role) {
+    btn.closest('.role-tabs').querySelectorAll('.role-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  // Toggle mot de passe
+  function togglePw(inputId, btn) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    if (input.type === 'password') { input.type = 'text'; btn.textContent = '🙈'; }
+    else { input.type = 'password'; btn.textContent = '👁️'; }
+  }
+
+  // Force du mot de passe
+  function checkPwStrength(val) {
+    const bars = ['bar1','bar2','bar3','bar4'];
+    const label = document.getElementById('pw-label');
+    let score = 0;
+    if (val.length >= 8) score++;
+    if (/[A-Z]/.test(val)) score++;
+    if (/[0-9]/.test(val)) score++;
+    if (/[^A-Za-z0-9]/.test(val)) score++;
+
+    bars.forEach((id, i) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.className = 'pw-bar';
+      if (i < score) {
+        if (score === 1) el.classList.add('weak');
+        else if (score <= 2) el.classList.add('medium');
+        else el.classList.add('strong');
+      }
+    });
+
+    if (!label) return;
+    if (val.length === 0) { label.textContent = 'Saisissez un mot de passe'; label.className = 'pw-label'; }
+    else if (score === 1) { label.textContent = 'Faible — ajoutez des chiffres et majuscules'; label.className = 'pw-label weak'; }
+    else if (score === 2) { label.textContent = 'Moyen — encore quelques améliorations'; label.className = 'pw-label medium'; }
+    else if (score === 3) { label.textContent = 'Bon mot de passe'; label.className = 'pw-label strong'; }
+    else { label.textContent = 'Excellent mot de passe ! 🔐'; label.className = 'pw-label strong'; }
+  }
+
+  // Connexion
+  function doLogin() {
+    const email = document.getElementById('login-email');
+    const pw = document.getElementById('login-pw');
+    const errEmail = document.getElementById('err-login-email');
+    const errPw = document.getElementById('err-login-pw');
+    const alert = document.getElementById('alert-login');
+    const btn = document.getElementById('btn-login');
+
+    let valid = true;
+    errEmail.classList.remove('show'); errPw.classList.remove('show');
+    email.classList.remove('error'); pw.classList.remove('error');
+
+    if (!email.value || !email.value.includes('@')) {
+      errEmail.classList.add('show'); email.classList.add('error'); valid = false;
+    }
+    if (!pw.value || pw.value.length < 4) {
+      errPw.classList.add('show'); pw.classList.add('error'); valid = false;
+    }
+    if (!valid) return;
+
+    btn.classList.add('btn-loading');
+    btn.textContent = 'Connexion en cours...';
+
+    setTimeout(() => {
+      btn.classList.remove('btn-loading');
+      btn.textContent = 'Se connecter';
+      if (email.value === 'erreur@test.com') {
+        document.getElementById('alert-login-msg').textContent = 'Email ou mot de passe incorrect. Vérifiez vos identifiants.';
+        alert.style.display = 'flex';
+        email.classList.add('error'); pw.classList.add('error');
+      } else {
+        showAuth('2fa');
+      }
+    }, 1500);
+  }
+
+  function clearAlert(id) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+    document.querySelectorAll('.form-input').forEach(i => i.classList.remove('error'));
+    document.querySelectorAll('.field-error').forEach(e => e.classList.remove('show'));
+  }
+
+  // Code email
+  function moveToNext(input, idx) {
+    if (input.value.length === 1) {
+      input.classList.add('filled');
+      const next = document.getElementById('c' + (idx + 1));
+      if (next) next.focus();
+    } else {
+      input.classList.remove('filled');
+    }
+  }
+
+  function checkAllFilled() {
+    const all = ['c0','c1','c2','c3','c4','c5'];
+    if (all.every(id => document.getElementById(id)?.value?.length === 1)) {
+      document.getElementById('c5').classList.add('filled');
+    }
+  }
+
+  // Code 2FA
+  function moveToNext2fa(input, idx) {
+    if (input.value.length === 1) {
+      input.classList.add('filled');
+      const next = document.getElementById('f' + (idx + 1));
+      if (next) next.focus();
+    } else {
+      input.classList.remove('filled');
+    }
+  }
+  function check2faFilled() {
+    document.getElementById('f5').classList.add('filled');
+  }
+
+  // Timer
+  let timerVal = 120;
+  function startTimer() {
+    timerVal = 120;
+    const el = document.getElementById('timer');
+    if (!el) return;
+    const interval = setInterval(() => {
+      timerVal--;
+      if (!document.getElementById('timer')) { clearInterval(interval); return; }
+      const m = Math.floor(timerVal / 60).toString().padStart(2,'0');
+      const s = (timerVal % 60).toString().padStart(2,'0')

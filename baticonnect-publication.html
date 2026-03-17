@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BatiConnect — Publication & Candidature</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const db = supabase.createClient("https://qlpsantpdtarnrqnjmik.supabase.co", "sb_publishable_7TrwU7Q2o69F1R6xKy3-Qg_jvCgSElW");
+  function toast(msg, type) {
+    var colors = {success:"#1D9E75", error:"#A32D2D", info:"#D85A30"};
+    var icons  = {success:"&#x2705;", error:"&#x274C;", info:"&#x1F4A1;"};
+    type = type || "success";
+    var el = document.createElement("div");
+    el.style.cssText = "position:fixed;bottom:24px;right:24px;z-index:9999;background:#fff;border-left:4px solid " + (colors[type]||"#1D9E75") + ";padding:14px 18px;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.15);font-family:Sora,sans-serif;font-size:13px;display:flex;align-items:center;gap:10px;max-width:340px";
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(function(){ el.remove(); }, 3500);
+  }
+  async function getUser() {
+    var r = await db.auth.getUser();
+    return r.data.user;
+  }
+  function fmtFCFA(n) {
+    return new Intl.NumberFormat("fr-FR").format(n) + " FCFA";
+  }
+</script>
+<style>@keyframes toastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}</style>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=DM+Sans:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --orange: #D85A30; --orange-light: #FAECE7; --orange-dark: #993C1D; --orange-mid: #F0997B;
+    --teal: #1D9E75; --teal-light: #E1F5EE; --teal-dark: #085041;
+    --amber: #BA7517; --amber-light: #FAEEDA;
+    --red: #A32D2D; --red-light: #FCEBEB;
+    --blue: #185FA5; --blue-light: #E6F1FB;
+    --gray-50: #F9F8F5; --gray-100: #F1EFE8; --gray-200: #D3D1C7;
+    --gray-400: #888780; --gray-600: #5F5E5A; --gray-900: #2C2C2A;
+    --white: #FFFFFF;
+    --font: 'Sora', sans-serif; --font-body: 'DM Sans', sans-serif;
+    --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px; --radius-xl: 24px;
+    --shadow-sm: 0 1px 4px rgba(0,0,0,0.06); --shadow-md: 0 4px 20px rgba(0,0,0,0.08);
+    --shadow-lg: 0 8px 40px rgba(0,0,0,0.12);
+  }
+  body { font-family: var(--font); background: var(--gray-50); color: var(--gray-900); min-height: 100vh; }
+
+  /* ── NAVBAR ── */
+  .navbar {
+    background: var(--white); border-bottom: 1px solid var(--gray-100);
+    padding: 0 28px; height: 62px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow-sm);
+  }
+  .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; cursor: pointer; }
+  .logo-icon { width: 36px; height: 36px; background: var(--orange); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+  .logo-icon svg { width: 19px; height: 19px; fill: white; }
+  .logo-text { font-size: 17px; font-weight: 700; color: var(--gray-900); }
+  .logo-text span { color: var(--orange); }
+  .nav-actions { display: flex; align-items: center; gap: 10px; }
+  .nav-btn { padding: 8px 16px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; cursor: pointer; border: none; font-family: var(--font); transition: all 0.2s; }
+  .nav-btn-ghost { background: transparent; color: var(--gray-600); }
+  .nav-btn-ghost:hover { background: var(--gray-100); }
+  .nav-btn-primary { background: var(--orange); color: white; }
+  .nav-btn-primary:hover { background: var(--orange-dark); }
+  .nav-notif { width: 36px; height: 36px; border-radius: 50%; background: var(--gray-100); display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; border: none; }
+  .notif-dot { position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; background: var(--orange); border-radius: 50%; border: 2px solid var(--white); }
+
+  /* ── PAGES ── */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── LAYOUT PRINCIPAL ── */
+  .main-layout { display: grid; grid-template-columns: 260px 1fr; min-height: calc(100vh - 62px); }
+  .sidebar { background: var(--white); border-right: 1px solid var(--gray-100); padding: 24px 16px; }
+  .sidebar-title { font-size: 11px; font-weight: 600; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 10px; padding: 0 8px; }
+  .sidebar-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-sm); cursor: pointer; font-size: 13px; font-weight: 500; color: var(--gray-600); transition: all 0.18s; margin-bottom: 2px; border: none; background: none; width: 100%; text-align: left; font-family: var(--font); }
+  .sidebar-item:hover { background: var(--gray-100); color: var(--gray-900); }
+  .sidebar-item.active { background: var(--orange-light); color: var(--orange-dark); }
+  .sidebar-item .item-icon { font-size: 16px; width: 20px; text-align: center; }
+  .sidebar-item .item-badge { margin-left: auto; background: var(--orange); color: white; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px; }
+  .sidebar-divider { height: 1px; background: var(--gray-100); margin: 14px 0; }
+  .content { padding: 28px; overflow-y: auto; }
+
+  /* ── HEADER DE SECTION ── */
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  .section-title-lg { font-size: 20px; font-weight: 700; color: var(--gray-900); }
+  .section-subtitle { font-size: 13px; color: var(--gray-400); font-family: var(--font-body); margin-top: 3px; }
+
+  /* ── FILTRES ── */
+  .filters-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+  .filter-input-wrap { position: relative; flex: 1; min-width: 200px; }
+  .filter-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 14px; }
+  .filter-input { width: 100%; padding: 9px 12px 9px 36px; border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm); font-size: 13px; font-family: var(--font-body); color: var(--gray-900); background: var(--white); outline: none; transition: border-color 0.2s; }
+  .filter-input:focus { border-color: var(--orange); }
+  .filter-select { padding: 9px 32px 9px 12px; border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm); font-size: 13px; font-family: var(--font-body); color: var(--gray-600); background: var(--white); outline: none; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%23888780' d='M5 7L0 2h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; }
+  .filter-btn { padding: 9px 16px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; cursor: pointer; border: 1.5px solid var(--gray-200); background: var(--white); color: var(--gray-600); font-family: var(--font); transition: all 0.18s; white-space: nowrap; }
+  .filter-btn:hover, .filter-btn.active { border-color: var(--orange); color: var(--orange); background: var(--orange-light); }
+  .filter-btn-primary { background: var(--orange); color: white; border-color: var(--orange); }
+  .filter-btn-primary:hover { background: var(--orange-dark); border-color: var(--orange-dark); }
+
+  /* ── CARDS ANNONCES ── */
+  .annonces-grid { display: grid; gap: 14px; }
+  .annonce-card {
+    background: var(--white); border: 1.5px solid var(--gray-100);
+    border-radius: var(--radius-lg); padding: 20px;
+    cursor: pointer; transition: all 0.2s; box-shadow: var(--shadow-sm);
+  }
+  .annonce-card:hover { border-color: var(--orange); box-shadow: var(--shadow-md); transform: translateY(-2px); }
+  .annonce-card.featured { border-color: var(--amber); background: linear-gradient(135deg, var(--white) 0%, var(--amber-light) 100%); }
+  .annonce-card.urgent { border-color: var(--red); }
+  .annonce-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+  .annonce-cat { display: flex; align-items: center; gap: 6px; }
+  .cat-icon { width: 38px; height: 38px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .cat-icon.orange { background: var(--orange-light); }
+  .cat-icon.teal { background: var(--teal-light); }
+  .cat-icon.amber { background: var(--amber-light); }
+  .cat-icon.blue { background: var(--blue-light); }
+  .annonce-meta { font-size: 11px; color: var(--gray-400); font-family: var(--font-body); margin-top: 2px; }
+  .annonce-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 600; }
+  .badge-urgent { background: var(--red-light); color: var(--red); }
+  .badge-new { background: var(--blue-light); color: var(--blue); }
+  .badge-featured { background: var(--amber-light); color: #633806; }
+  .badge-open { background: var(--teal-light); color: var(--teal-dark); }
+  .badge-closed { background: var(--gray-100); color: var(--gray-600); }
+  .badge-selected { background: var(--orange-light); color: var(--orange-dark); }
+  .annonce-title { font-size: 15px; font-weight: 600; color: var(--gray-900); margin-bottom: 6px; }
+  .annonce-desc { font-size: 13px; color: var(--gray-600); font-family: var(--font-body); line-height: 1.6; margin-bottom: 14px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .annonce-infos { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
+  .info-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--gray-600); font-family: var(--font-body); }
+  .info-item strong { color: var(--gray-900); font-weight: 500; }
+  .annonce-footer { display: flex; align-items: center; justify-content: space-between; padding-top: 12px; border-top: 1px solid var(--gray-100); }
+  .candidats-count { font-size: 12px; color: var(--gray-400); font-family: var(--font-body); display: flex; align-items: center; gap: 6px; }
+  .candidats-avatars { display: flex; }
+  .mini-avatar { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--white); display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: white; margin-left: -6px; }
+  .mini-avatar:first-child { margin-left: 0; }
+  .ma-orange { background: var(--orange); }
+  .ma-teal { background: var(--teal); }
+  .ma-amber { background: var(--amber); }
+  .ma-blue { background: var(--blue); }
+  .btn-sm { padding: 7px 14px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 600; cursor: pointer; border: none; font-family: var(--font); transition: all 0.18s; }
+  .btn-sm-primary { background: var(--orange); color: white; }
+  .btn-sm-primary:hover { background: var(--orange-dark); }
+  .btn-sm-outline { background: var(--white); color: var(--orange); border: 1.5px solid var(--orange); }
+  .btn-sm-outline:hover { background: var(--orange-light); }
+  .btn-sm-teal { background: var(--teal); color: white; }
+  .btn-sm-teal:hover { background: var(--teal-dark); }
+
+  /* ── MODAL PUBLICATION ── */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; display: none; align-items: flex-start; justify-content: center; padding: 24px; overflow-y: auto; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--white); border-radius: var(--radius-xl); width: 100%; max-width: 640px; box-shadow: var(--shadow-lg); margin: auto; }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 22px 28px; border-bottom: 1px solid var(--gray-100); }
+  .modal-title { font-size: 17px; font-weight: 700; }
+  .modal-close { width: 32px; height: 32px; border-radius: 50%; border: none; background: var(--gray-100); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: all 0.18s; }
+  .modal-close:hover { background: var(--gray-200); }
+  .modal-body { padding: 28px; }
+  .modal-footer { padding: 18px 28px; border-top: 1px solid var(--gray-100); display: flex; gap: 10px; justify-content: flex-end; }
+
+  /* Steps */
+  .pub-steps { display: flex; gap: 0; margin-bottom: 28px; }
+  .pub-step { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; position: relative; }
+  .pub-step:not(:last-child)::after { content: ''; position: absolute; top: 14px; left: 60%; width: 80%; height: 2px; background: var(--gray-200); z-index: 0; }
+  .pub-step.done:not(:last-child)::after { background: var(--teal); }
+  .pub-step-num { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; z-index: 1; transition: all 0.3s; }
+  .pub-step-num.active { background: var(--orange); color: white; }
+  .pub-step-num.done { background: var(--teal); color: white; }
+  .pub-step-num.pending { background: var(--gray-100); color: var(--gray-400); }
+  .pub-step-label { font-size: 10px; font-weight: 500; color: var(--gray-400); text-align: center; }
+  .pub-step.active .pub-step-label { color: var(--orange); }
+  .pub-step.done .pub-step-label { color: var(--teal); }
+
+  .form-group { margin-bottom: 18px; }
+  .form-label { font-size: 13px; font-weight: 500; color: var(--gray-900); margin-bottom: 7px; display: flex; justify-content: space-between; align-items: center; }
+  .form-label span { font-size: 11px; color: var(--gray-400); font-weight: 400; }
+  .form-input, .form-select, .form-textarea { width: 100%; padding: 10px 14px; border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm); font-size: 13px; font-family: var(--font-body); color: var(--gray-900); background: var(--white); outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(216,90,48,0.09); }
+  .form-textarea { resize: vertical; min-height: 90px; line-height: 1.6; }
+  .form-select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%23888780' d='M5 7L0 2h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .cat-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+  .cat-choice { padding: 10px 8px; border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm); text-align: center; cursor: pointer; transition: all 0.18s; background: var(--white); font-family: var(--font); }
+  .cat-choice:hover { border-color: var(--orange); }
+  .cat-choice.sel { border-color: var(--orange); background: var(--orange-light); }
+  .cat-choice .cc-icon { font-size: 22px; margin-bottom: 4px; }
+  .cat-choice .cc-label { font-size: 11px; font-weight: 500; color: var(--gray-900); }
+  .upload-zone { border: 2px dashed var(--gray-200); border-radius: var(--radius-md); padding: 22px; text-align: center; cursor: pointer; transition: all 0.2s; }
+  .upload-zone:hover { border-color: var(--orange); background: var(--orange-light); }
+  .upload-text { font-size: 13px; color: var(--gray-600); font-family: var(--font-body); margin-top: 6px; }
+  .upload-text strong { color: var(--orange); }
+  .upload-hint { font-size: 11px; color: var(--gray-400); margin-top: 4px; }
+  .btn-full { width: 100%; padding: 12px; border-radius: var(--radius-md); font-size: 14px; font-weight: 600; cursor: pointer; border: none; font-family: var(--font); transition: all 0.2s; }
+  .btn-orange { background: var(--orange); color: white; }
+  .btn-orange:hover { background: var(--orange-dark); }
+  .btn-gray { background: var(--gray-100); color: var(--gray-600); }
+  .btn-gray:hover { background: var(--gray-200); }
+
+  /* ── DETAIL ANNONCE ── */
+  .detail-layout { display: grid; grid-template-columns: 1fr 340px; gap: 20px; align-items: start; }
+  .detail-card { background: var(--white); border: 1px solid var(--gray-100); border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--shadow-sm); margin-bottom: 16px; }
+  .detail-title { font-size: 22px; font-weight: 700; color: var(--gray-900); margin-bottom: 8px; }
+  .detail-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .detail-desc { font-size: 14px; color: var(--gray-600); font-family: var(--font-body); line-height: 1.8; margin-bottom: 20px; }
+  .detail-infos { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 18px; background: var(--gray-50); border-radius: var(--radius-md); }
+  .detail-info-item .di-label { font-size: 11px; color: var(--gray-400); font-family: var(--font-body); margin-bottom: 3px; }
+  .detail-info-item .di-value { font-size: 14px; font-weight: 600; color: var(--gray-900); }
+  .section-label { font-size: 13px; font-weight: 600; color: var(--gray-900); margin-bottom: 14px; margin-top: 20px; }
+
+  /* Candidature card */
+  .candidature-card { background: var(--white); border: 1.5px solid var(--gray-100); border-radius: var(--radius-lg); padding: 18px; margin-bottom: 12px; transition: all 0.2s; }
+  .candidature-card:hover { border-color: var(--orange); }
+  .candidature-card.selected-cand { border-color: var(--teal); background: var(--teal-light); }
+  .cand-top { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+  .cand-avatar { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; color: white; flex-shrink: 0; }
+  .av-o { background: linear-gradient(135deg,var(--orange),var(--orange-dark)); }
+  .av-t { background: linear-gradient(135deg,var(--teal),var(--teal-dark)); }
+  .av-a { background: linear-gradient(135deg,var(--amber),#633806); }
+  .av-b { background: linear-gradient(135deg,var(--blue),#042C53); }
+  .cand-info { flex: 1; }
+  .cand-name { font-size: 14px; font-weight: 600; color: var(--gray-900); }
+  .cand-job { font-size: 12px; color: var(--gray-400); font-family: var(--font-body); margin-top: 2px; }
+  .cand-badges { display: flex; gap: 6px; margin-top: 5px; flex-wrap: wrap; }
+  .stars { color: var(--amber); font-size: 12px; }
+  .cand-price { text-align: right; }
+  .price-val { font-size: 16px; font-weight: 700; color: var(--orange); }
+  .price-delay { font-size: 11px; color: var(--gray-400); margin-top: 2px; }
+  .cand-message { font-size: 13px; color: var(--gray-600); font-family: var(--font-body); line-height: 1.6; padding: 12px; background: var(--gray-50); border-radius: var(--radius-sm); margin-bottom: 12px; }
+  .cand-actions { display: flex; gap: 8px; }
+
+  /* Sticky sidebar */
+  .sticky-card { position: sticky; top: 90px; background: var(--white); border: 1.5px solid var(--gray-100); border-radius: var(--radius-lg); padding: 22px; box-shadow: var(--shadow-sm); }
+  .sticky-title { font-size: 14px; font-weight: 600; margin-bottom: 16px; }
+  .price-display { font-size: 28px; font-weight: 700; color: var(--orange); margin-bottom: 4px; }
+  .price-range { font-size: 13px; color: var(--gray-400); font-family: var(--font-body); margin-bottom: 18px; }
+  .sticky-infos { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+  .sticky-info { display: flex; justify-content: space-between; align-items: center; font-size: 13px; padding: 8px 0; border-bottom: 1px solid var(--gray-100); }
+  .sticky-info:last-child { border-bottom: none; }
+  .si-label { color: var(--gray-400); font-family: var(--font-body); }
+  .si-value { font-weight: 500; color: var(--gray-900); }
+  .progress-section { margin-bottom: 18px; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--gray-400); margin-bottom: 6px; }
+  .progress-bar { height: 6px; background: var(--gray-100); border-radius: 4px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--orange); border-radius: 4px; transition: width 0.5s; }
+  .progress-fill.teal { background: var(--teal); }
+
+  /* Formulaire candidature */
+  .cand-form { background: var(--white); border: 1.5px solid var(--gray-100); border-radius: var(--radius-lg); padding: 22px; box-shadow: var(--shadow-sm); margin-bottom: 16px; }
+  .cand-form-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  .cand-form-sub { font-size: 12px; color: var(--gray-400); font-family: var(--font-body); margin-bottom: 18px; }
+  .price-inputs { display: flex; gap: 10px; }
+  .price-input-wrap { flex: 1; position: relative; }
+  .price-currency { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 12px; color: var(--gray-400); pointer-events: none; }
+
+  /* Stats dashboard */
+  .stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 24px; }
+  .stat-card { background: var(--white); border: 1px solid var(--gray-100); border-radius: var(--radius-lg); padding: 18px; box-shadow: var(--shadow-sm); }
+  .stat-num { font-size: 26px; font-weight: 700; color: var(--gray-900); margin-bottom: 3px; }
+  .stat-num.orange { color: var(--orange); }
+  .stat-num.teal { color: var(--teal); }
+  .stat-label { font-size: 12px; color: var(--gray-400); font-family: var(--font-body); }
+  .stat-change { font-size: 11px; margin-top: 5px; }
+  .stat-change.up { color: var(--teal); }
+  .stat-change.down { color: var(--red); }
+
+  /* Tags */
+  .tag-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+  .tag { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+  .tag-orange { background: var(--orange-light); color: var(--orange-dark); }
+  .tag-teal { background: var(--teal-light); color: var(--teal-dark); }
+
+  /* Alert */
+  .alert { padding: 12px 16px; border-radius: var(--radius-sm); font-size: 13px; font-family: var(--font-body); line-height: 1.5; margin-bottom: 16px; display: flex; gap: 10px; }
+  .alert-success { background: var(--teal-light); color: var(--teal-dark); }
+  .alert-info { background: var(--orange-light); color: var(--orange-dark); }
+
+  /* Empty state */
+  .empty-state { text-align: center; padding: 60px 24px; }
+  .empty-icon { font-size: 48px; margin-bottom: 16px; }
+  .empty-title { font-size: 16px; font-weight: 600; color: var(--gray-900); margin-bottom: 8px; }
+  .empty-text { font-size: 13px; color: var(--gray-400); font-family: var(--font-body); line-height: 1.6; }
+
+  @media (max-width: 900px) {
+    .main-layout { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .detail-layout { grid-template-columns: 1fr; }
+    .stats-row { grid-template-columns: repeat(2,1fr); }
+    .form-row { grid-template-columns: 1fr; }
+    .cat-grid { grid-template-columns: repeat(2,1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="logo" onclick="showPage('annonces')">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22" fill="none" stroke="white" stroke-width="1.5"/></svg>
+    </div>
+    <span class="logo-text">Bati<span>Connect</span></span>
+  </div>
+  <div class="nav-actions">
+    <button class="nav-btn nav-btn-ghost" onclick="showPage('mes-annonces')">Mes annonces</button>
+    <button class="nav-btn nav-btn-ghost" onclick="showPage('mes-candidatures')">Mes candidatures</button>
+    <button class="nav-notif">🔔<div class="notif-dot"></div></button>
+    <button class="nav-btn nav-btn-primary" onclick="openModal()">+ Publier une annonce</button>
+  </div>
+</nav>
+
+<!-- ════════════════════════════════════════ -->
+<!-- PAGE 1 : LISTE DES ANNONCES            -->
+<!-- ════════════════════════════════════════ -->
+<div class="page active" id="page-annonces">
+  <div class="main-layout">
+    <aside class="sidebar">
+      <div class="sidebar-title">Catégories</div>
+      <button class="sidebar-item active" onclick="filterCat(this,'all')"><span class="item-icon">📋</span> Toutes les annonces <span class="item-badge">24</span></button>
+      <button class="sidebar-item" onclick="filterCat(this,'construction')"><span class="item-icon">🏗️</span> Construction <span class="item-badge">8</span></button>
+      <button class="sidebar-item" onclick="filterCat(this,'electric')"><span class="item-icon">⚡</span> Électricité <span class="item-badge">5</span></button>
+      <button class="sidebar-item" onclick="filterCat(this,'plumbing')"><span class="item-icon">🔧</span> Plomberie <span class="item-badge">4</span></button>
+      <button class="sidebar-item" onclick="filterCat(this,'paint')"><span class="item-icon">🎨</span> Peinture <span class="item-badge">3</span></button>
+      <button class="sidebar-item" onclick="filterCat(this,'menu')"><span class="item-icon">🪟</span> Menuiserie <span class="item-badge">2</span></button>
+      <button class="sidebar-item" onclick="filterCat(this,'other')"><span class="item-icon">✂️</span> Autres services <span class="item-badge">2</span></button>
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-title">Localisation</div>
+      <button class="sidebar-item"><span class="item-icon">📍</span> Cotonou</button>
+      <button class="sidebar-item"><span class="item-icon">📍</span> Abomey-Calavi</button>
+      <button class="sidebar-item"><span class="item-icon">📍</span> Porto-Novo</button>
+      <button class="sidebar-item"><span class="item-icon">📍</span> Parakou</button>
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-title">Budget</div>
+      <button class="sidebar-item"><span class="item-icon">💰</span> Moins de 500K FCFA</button>
+      <button class="sidebar-item"><span class="item-icon">💰</span> 500K – 2M FCFA</button>
+      <button class="sidebar-item"><span class="item-icon">💰</span> Plus de 2M FCFA</button>
+    </aside>
+
+    <div class="content">
+      <div class="section-header">
+        <div>
+          <div class="section-title-lg">Annonces disponibles</div>
+          <div class="section-subtitle">24 projets en attente de prestataires vérifiés</div>
+        </div>
+        <button class="nav-btn nav-btn-primary" onclick="openModal()">+ Publier une annonce</button>
+      </div>
+
+      <div class="filters-bar">
+        <div class="filter-input-wrap">
+          <span class="filter-icon">🔍</span>
+          <input class="filter-input" type="text" placeholder="Rechercher un projet, une ville...">
+        </div>
+        <select class="filter-select">
+          <option>Trier : Plus récent</option>
+          <option>Budget : Croissant</option>
+          <option>Budget : Décroissant</option>
+          <option>Délai : Plus court</option>
+          <option>Proximité</option>
+        </select>
+        <button class="filter-btn active">Tous</button>
+        <button class="filter-btn" onclick="toggleFilter(this)">🔴 Urgent</button>
+        <button class="filter-btn" onclick="toggleFilter(this)">⭐ Premium</button>
+      </div>
+
+      <div class="annonces-grid">
+
+        <!-- Annonce 1 -->
+        <div class="annonce-card featured" onclick="showPage('detail-annonce')">
+          <div class="annonce-top">
+            <div class="annonce-cat">
+              <div class="cat-icon orange">🏗️</div>
+              <div>
+                <div style="font-size:11px;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:0.05em">Maçonnerie</div>
+                <div class="annonce-meta">Publié il y a 2h · Abomey-Calavi</div>
+              </div>
+            </div>
+            <div class="annonce-badges">
+              <span class="badge badge-featured">⭐ Premium</span>
+              <span class="badge badge-open">● Ouvert</span>
+            </div>
+          </div>
+          <div class="annonce-title">Construction villa 4 chambres — Abomey-Calavi</div>
+          <div class="annonce-desc">Recherche maçon expérimenté pour la construction d'une villa de 4 chambres sur terrain de 400m². Plans architecturaux disponibles. Financement diaspora.</div>
+          <div class="annonce-infos">
+            <div class="info-item">💰 <strong>12 000 000 FCFA</strong></div>
+            <div class="info-item">⏱️ Délai : <strong>8 mois</strong></div>
+            <div class="info-item">📍 <strong>Calavi, Bénin</strong></div>
+            <div class="info-item">🌍 Client : <strong>France</strong></div>
+          </div>
+          <div class="annonce-footer">
+            <div class="candidats-count">
+              <div class="candidats-avatars">
+                <div class="mini-avatar ma-orange">KA</div>
+                <div class="mini-avatar ma-teal">MS</div>
+                <div class="mini-avatar ma-amber">AB</div>
+                <div class="mini-avatar ma-blue">+9</div>
+              </div>
+              12 candidatures
+            </div>
+            <button class="btn-sm btn-sm-primary" onclick="event.stopPropagation();showPage('postuler')">Postuler →</button>
+          </div>
+        </div>
+
+        <!-- Annonce 2 -->
+        <div class="annonce-card urgent" onclick="showPage('detail-annonce')">
+          <div class="annonce-top">
+            <div class="annonce-cat">
+              <div class="cat-icon teal">⚡</div>
+              <div>
+                <div style="font-size:11px;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:0.05em">Électricité</div>
+                <div class="annonce-meta">Publié il y a 5h · Cotonou</div>
+              </div>
+            </div>
+            <div class="annonce-badges">
+              <span class="badge badge-urgent">🔴 Urgent</span>
+              <span class="badge badge-open">● Ouvert</span>
+            </div>
+          </div>
+          <div class="annonce-title">Installation électrique complète — Immeuble R+3</div>
+          <div class="annonce-desc">Installation électrique complète pour immeuble de 3 étages à Cotonou centre. Certification requise. Travaux à démarrer dans les 2 semaines.</div>
+          <div class="annonce-infos">
+            <div class="info-item">💰 <strong>3 500 000 FCFA</strong></div>
+            <div class="info-item">⏱️ Délai : <strong>3 mois</strong></div>
+            <div class="info-item">📍 <strong>Cotonou, Bénin</strong></div>
+          </div>
+          <div class="annonce-footer">
+            <div class="candidats-count">
+              <div class="candidats-avatars">
+                <div class="mini-avatar ma-teal">EK</div>
+                <div class="mini-avatar ma-blue">+4</div>
+              </div>
+              5 candidatures
+            </div>
+            <button class="btn-sm btn-sm-primary" onclick="event.stopPropagation();showPage('postuler')">Postuler →</button>
+          </div>
+        </div>
+
+        <!-- Annonce 3 -->
+        <div class="annonce-card" onclick="showPage('detail-annonce')">
+          <div class="annonce-top">
+            <div class="annonce-cat">
+              <div class="cat-icon amber">🎨</div>
+              <div>
+                <div style="font-size:11px;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:0.05em">Peinture</div>
+                <div class="annonce-meta">Publié hier · Porto-Novo</div>
+              </div>
+            </div>
+            <div class="annonce-badges">
+              <span class="badge badge-new">🔵 Nouveau</span>
+              <span class="badge badge-open">● Ouvert</span>
+            </div>
+          </div>
+          <div class="annonce-title">Peinture intérieure & extérieure — Villa 6 pièces</div>
+          <div class="annonce-desc">Peinture complète d'une villa 6 pièces à Porto-Novo. Préférence peinture acrylique haut de gamme. Inclure devis matériaux dans la proposition.</div>
+          <div class="annonce-infos">
+            <div class="info-item">💰 <strong>850 000 FCFA</strong></div>
+            <div class="info-item">⏱️ Délai : <strong>3 semaines</strong></div>
+            <div class="info-item">📍 <strong>Porto-Novo</strong></div>
+          </div>
+          <div class="annonce-footer">
+            <div class="candidats-count">
+              <div class="candidats-avatars">
+                <div class="mini-avatar ma-amber">BT</div>
+                <div class="mini-avatar ma-orange">+2</div>
+              </div>
+              3 candidatures
+            </div>
+            <button class="btn-sm btn-sm-primary" onclick="event.stopPropagation();showPage('postuler')">Postuler →</button>
+          </div>
+        </div>
+
+        <!-- Annonce 4 -->
+        <div class="annonce-card" onclick="showPage('detail-annonce')">
+          <div class="annonce-top">
+            <div class="annonce-cat">
+              <div class="cat-icon blue">🔧</div>
+              <div>
+                <div style="font-size:11px;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:0.05em">Plomberie</div>
+                <div class="annonce-meta">Publié il y a 3 jours · Parakou</div>
+              </div>
+            </div>
+            <div class="annonce-badges">
+              <span class="badge badge-selected">✔ Prestataire sélectionné</span>
+            </div>
+          </div>
+          <div class="annonce-title">Plomberie complète résidence haut standing</div>
+          <div class="annonce-desc">Installation plomberie sanitaire pour résidence de standing. Travaux terminés — en attente de validation finale par le client.</div>
+          <div class="annonce-infos">
+            <div class="info-item">💰 <strong>1 200 000 FCFA</strong></div>
+            <div class="info-item">⏱️ Délai : <strong>6 semaines</strong></div>
+            <div class="info-item">📍 <strong>Parakou, Bénin</strong></div>
+          </div>
+          <div class="annonce-footer">
+            <div class="candidats-count">7 candidatures reçues</div>
+            <button class="btn-sm btn-sm-outline" disabled style="opacity:0.5;cursor:not-allowed">Fermé</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- PAGE 2 : DETAIL ANNONCE               -->
+<!-- ════════════════════════════════════════ -->
+<div class="page" id="page-detail-annonce">
+  <div style="padding:24px 28px;max-width:1100px;margin:0 auto">
+    <button style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--gray-400);cursor:pointer;border:none;background:none;font-family:var(--font);margin-bottom:20px" onclick="showPage('annonces')">← Retour aux annonces</button>
+
+    <div class="detail-layout">
+      <div>
+        <div class="detail-card">
+          <div class="detail-badges">
+            <span class="badge badge-featured">⭐ Premium</span>
+            <span class="badge badge-open">● Ouvert — 12 candidatures</span>
+          </div>
+          <div class="detail-title">Construction villa 4 chambres — Abomey-Calavi</div>
+          <div class="detail-desc">
+            Bonjour, je recherche un maçon ou chef de chantier expérimenté pour la construction d'une villa de 4 chambres sur un terrain de 400m² à Abomey-Calavi. Les plans architecturaux sont disponibles et peuvent être partagés après sélection.<br><br>
+            Je suis basé en France et je superviserai le projet à distance via l'application. Des photos et vidéos régulières seront requises (minimum 3 fois par semaine). Le paiement sera effectué par étapes via le système ESCROW de BatiConnect.
+          </div>
+          <div class="detail-infos">
+            <div class="detail-info-item"><div class="di-label">Budget</div><div class="di-value" style="color:var(--orange)">12 000 000 FCFA</div></div>
+            <div class="detail-info-item"><div class="di-label">Délai souhaité</div><div class="di-value">8 mois</div></div>
+            <div class="detail-info-item"><div class="di-label">Localisation</div><div class="di-value">📍 Abomey-Calavi, Bénin</div></div>
+            <div class="detail-info-item"><div class="di-label">Client basé à</div><div class="di-value">🇫🇷 Paris, France</div></div>
+            <div class="detail-info-item"><div class="di-label">Publié le</div><div class="di-value">13 Mars 2026</div></div>
+            <div class="detail-info-item"><div class="di-label">Type de contrat</div><div class="di-value">Forfait complet</div></div>
+          </div>
+          <div class="section-label">Compétences recherchées</div>
+          <div class="tag-grid">
+            <span class="tag tag-orange">🏗️ Maçonnerie</span>
+            <span class="tag tag-orange">📐 Lecture de plans</span>
+            <span class="tag tag-orange">👷 Gestion d'équipe</span>
+            <span class="tag tag-orange">🏠 Carrelage</span>
+            <span class="tag tag-orange">🎨 Enduit & finitions</span>
+          </div>
+          <div class="section-label">Documents joints</div>
+          <div style="display:flex;gap:10px">
+            <div style="padding:10px 14px;background:var(--gray-50);border-radius:var(--radius-sm);font-size:12px;display:flex;align-items:center;gap:8px;cursor:pointer;border:1px solid var(--gray-200)">📄 Plan_villa_4ch.pdf</div>
+            <div style="padding:10px 14px;background:var(--gray-50);border-radius:var(--radius-sm);font-size:12px;display:flex;align-items:center;gap:8px;cursor:pointer;border:1px solid var(--gray-200)">📷 Photos_terrain.zip</div>
+          </div>
+        </div>
+
+        <div class="section-label" style="margin:0 0 14px">Candidatures reçues (12)</div>
+
+        <div class="candidature-card">
+          <div class="cand-top">
+            <div class="cand-avatar av-o">KA</div>
+            <div class="cand-info">
+              <div class="cand-name">Kofi Adetokunbo</div>
+              <div class="cand-job">Maçon senior · 12 ans d'exp · Calavi</div>
+              <div class="cand-badges">
+                <span class="badge" style="background:var(--teal-light);color:var(--teal-dark)">✔ Vérifié</span>
+                <span class="badge" style="background:var(--amber-light);color:#633806">🏆 Expert</span>
+                <span class="stars">★★★★★ 4.9</span>
+              </div>
+            </div>
+            <div class="cand-price">
+              <div class="price-val">10.5M FCFA</div>
+              <div class="price-delay">⏱️ 7 mois</div>
+            </div>
+          </div>
+          <div class="cand-message">
+            "Je dispose de 12 ans d'expérience en construction résidentielle au Bénin. J'ai réalisé plus de 15 villas de ce type. Je peux démarrer dans 2 semaines et fournirai des rapports photo quotidiens via l'application."
+          </div>
+          <div class="cand-actions">
+            <button class="btn-sm btn-sm-primary" onclick="selectCandidat()">✓ Sélectionner</button>
+            <button class="btn-sm btn-sm-outline">💬 Messagerie</button>
+            <button class="btn-sm" style="background:var(--gray-100);color:var(--gray-600)">Voir profil</button>
+          </div>
+        </div>
+
+        <div class="candidature-card">
+          <div class="cand-top">
+            <div class="cand-avatar av-t">MS</div>
+            <div class="cand-info">
+              <div class="cand-name">Moussa Soumahoro</div>
+              <div class="cand-job">Chef de chantier · 8 ans · Porto-Novo</div>
+              <div class="cand-badges">
+                <span class="badge" style="background:var(--teal-light);color:var(--teal-dark)">✔ Vérifié</span>
+                <span class="badge" style="background:var(--orange-light);color:var(--orange-dark)">Certifié</span>
+                <span class="stars">★★★★☆ 4.2</span>
+              </div>
+            </div>
+            <div class="cand-price">
+              <div class="price-val">11.2M FCFA</div>
+              <div class="price-delay">⏱️ 8 mois</div>
+            </div>
+          </div>
+          <div class="cand-message">
+            "Chef de chantier certifié avec 8 ans d'expérience. Mon équipe est disponible immédiatement. Je propose un suivi hebdomadaire par vidéo-conférence en plus des photos journalières."
+          </div>
+          <div class="cand-actions">
+            <button class="btn-sm btn-sm-primary">✓ Sélectionner</button>
+            <button class="btn-sm btn-sm-outline">💬 Messagerie</button>
+            <button class="btn-sm" style="background:var(--gray-100);color:var(--gray-600)">Voir profil</button>
+          </div>
+        </div>
+
+        <div class="candidature-card">
+          <div class="cand-top">
+            <div class="cand-avatar av-a">AB</div>
+            <div class="cand-info">
+              <div class="cand-name">Aïcha Balogun</div>
+              <div class="cand-job">Architecte & Maître d'œuvre · 15 ans · Cotonou</div>
+              <div class="cand-badges">
+                <span class="badge" style="background:var(--teal-light);color:var(--teal-dark)">✔ Expert</span>
+                <span class="stars">★★★★★ 5.0</span>
+              </div>
+            </div>
+            <div class="cand-price">
+              <div class="price-val">13.8M FCFA</div>
+              <div class="price-delay">⏱️ 6 mois</div>
+            </div>
+          </div>
+          <div class="cand-message">
+            "Architecte et maître d'œuvre avec 15 ans d'expérience. Je gère l'intégralité du projet : plans, approvisionnement matériaux, coordination des équipes et suivi qualité. Délai garanti."
+          </div>
+          <div class="cand-actions">
+            <button class="btn-sm btn-sm-primary">✓ Sélectionner</button>
+            <button class="btn-sm btn-sm-outline">💬 Messagerie</button>
+            <button class="btn-sm" style="background:var(--gray-100);color:var(--gray-600)">Voir profil</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar sticky -->
+      <div>
+        <div class="sticky-card">
+          <div class="sticky-title">Résumé du projet</div>
+          <div class="price-display">12 000 000</div>
+          <div class="price-range">FCFA · Budget maximum</div>
+          <div class="sticky-infos">
+            <div class="sticky-info"><span class="si-label">Catégorie</span><span class="si-value">🏗️ Maçonnerie</span></div>
+            <div class="sticky-info"><span class="si-label">Délai</span><span class="si-value">8 mois</span></div>
+            <div class="sticky-info"><span class="si-label">Localisation</span><span class="si-value">📍 Calavi</span></div>
+            <div class="sticky-info"><span class="si-label">Candidatures</span><span class="si-value" style="color:var(--orange);font-weight:700">12 reçues</span></div>
+          </div>
+          <div class="progress-section">
+            <div class="progress-label"><span>Avancement du recrutement</span><span>75%</span></div>
+            <div class="progress-bar"><div class="progress-fill" style="width:75%"></div></div>
+          </div>
+          <button class="btn-full btn-orange" onclick="showPage('postuler')">✍️ Postuler à ce projet</button>
+          <div style="text-align:center;font-size:12px;color:var(--gray-400);font-family:var(--font-body);margin-top:12px">🔒 Paiement sécurisé ESCROW</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- PAGE 3 : FORMULAIRE CANDIDATURE       -->
+<!-- ════════════════════════════════════════ -->
+<div class="page" id="page-postuler">
+  <div style="max-width:760px;margin:32px auto;padding:0 24px 60px">
+    <button style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--gray-400);cursor:pointer;border:none;background:none;font-family:var(--font);margin-bottom:24px" onclick="showPage('detail-annonce')">← Retour à l'annonce</button>
+
+    <div style="margin-bottom:28px">
+      <div style="font-size:20px;font-weight:700;margin-bottom:4px">Postuler au projet</div>
+      <div style="font-size:14px;color:var(--gray-400);font-family:var(--font-body)">Construction villa 4 chambres — Abomey-Calavi · Budget : 12M FCFA</div>
+    </div>
+
+    <div class="alert alert-info">
+      <span style="font-size:16px">💡</span>
+      <div>Votre identité restera <strong>confidentielle</strong> jusqu'à ce que l'équipe BatiConnect vous sélectionne pour ce projet. Le client ne verra que votre note, vos spécialités et votre proposition.</div>
+    </div>
+
+    <div class="cand-form">
+      <div class="cand-form-title">Votre proposition financière</div>
+      <div class="cand-form-sub">Budget demandeur : 12 000 000 FCFA · Soyez précis et réaliste</div>
+      <div class="form-row" style="margin-bottom:18px">
+        <div class="form-group" style="margin-bottom:0">
+          <div class="form-label">Votre prix <span style="color:var(--orange)">*</span></div>
+          <div class="price-input-wrap">
+            <input class="form-input" type="number" placeholder="Ex: 10500000" style="padding-right:60px">
+            <span class="price-currency">FCFA</span>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <div class="form-label">Délai de réalisation <span style="color:var(--orange)">*</span></div>
+          <input class="form-input" type="text" placeholder="Ex: 7 mois">
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <div class="form-label">Acompte souhaité au démarrage <span style="font-size:11px;color:var(--gray-400)">(via ESCROW)</span></div>
+        <select class="form-select">
+          <option>10% du montant total</option>
+          <option selected>20% du montant total</option>
+          <option>30% du montant total</option>
+          <option>Paiement en jalons</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="cand-form">
+      <div class="cand-form-title">Votre message de candidature</div>
+      <div class="cand-form-sub">Présentez votre expérience, votre méthode de travail et pourquoi vous êtes le meilleur choix</div>
+      <div class="form-group">
+        <div class="form-label">Message <span style="color:var(--orange)">*</span> <span>Min. 100 caractères</span></div>
+        <textarea class="form-textarea" rows="5" placeholder="Bonjour, je suis [votre spécialité] avec [X] ans d'expérience. J'ai réalisé des projets similaires comme... Mon approche pour ce projet serait... Je peux démarrer le..."></textarea>
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <div class="form-label">Date de disponibilité</div>
+        <input class="form-input" type="date">
+      </div>
+    </div>
+
+    <div class="cand-form">
+      <div class="cand-form-title">Pièces jointes (optionnel)</div>
+      <div class="cand-form-sub">Partagez des photos de réalisations similaires pour renforcer votre candidature</div>
+      <div class="upload-zone">
+        <div style="font-size:28px;margin-bottom:8px">📎</div>
+        <div class="upload-text">Glissez vos fichiers ou <strong>parcourez</strong></div>
+        <div class="upload-hint">Photos de chantiers similaires · Devis détaillé · Certifications · Max 5 fichiers</div>
+      </div>
+    </div>
+
+    <div class="cand-form" style="background:var(--gray-50)">
+      <div class="cand-form-title">Conditions & engagement</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <label style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--gray-600);font-family:var(--font-body);cursor:pointer">
+          <input type="checkbox" checked style="accent-color:var(--orange);margin-top:2px;flex-shrink:0">
+          J'accepte les <span style="color:var(--orange);margin:0 3px">Conditions générales</span> de BatiConnect et m'engage à respecter les délais et la qualité proposés.
+        </label>
+        <label style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--gray-600);font-family:var(--font-body);cursor:pointer">
+          <input type="checkbox" checked style="accent-color:var(--orange);margin-top:2px;flex-shrink:0">
+          Je comprends que le non-respect du contrat entraîne des <strong style="color:var(--orange-dark)">pénalités financières</strong> automatiques.
+        </label>
+        <label style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--gray-600);font-family:var(--font-body);cursor:pointer">
+          <input type="checkbox" checked style="accent-color:var(--orange);margin-top:2px;flex-shrink:0">
+          Je m'engage à publier des rapports photo/vidéo réguliers via l'application.
+        </label>
+      </div>
+    </div>
+
+    <button class="btn-full btn-orange" style="padding:15px;font-size:15px" onclick="showPage('candidature-envoyee')">
+      ✍️ Envoyer ma candidature →
+    </button>
+    <div style="text-align:center;font-size:12px;color:var(--gray-400);font-family:var(--font-body);margin-top:12px">Votre identité sera confidentielle jusqu'à la sélection par BatiConnect</div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- PAGE 4 : CANDIDATURE ENVOYÉE          -->
+<!-- ════════════════════════════════════════ -->
+<div class="page" id="page-candidature-envoyee">
+  <div style="max-width:500px;margin:80px auto;padding:0 24px;text-align:center">
+    <div style="width:80px;height:80px;border-radius:50%;background:var(--teal-light);display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 24px">✅</div>
+    <div style="font-size:24px;font-weight:700;margin-bottom:12px">Candidature envoyée !</div>
+    <div style="font-size:14px;color:var(--gray-600);font-family:var(--font-body);line-height:1.7;margin-bottom:32px">
+      Votre candidature pour la <strong>Construction villa 4 chambres</strong> a bien été reçue. Notre équipe va l'examiner et vous notifier si vous êtes sélectionné.
+    </div>
+    <div class="alert alert-success" style="text-align:left">
+      <span style="font-size:16px">🔔</span>
+      <div>Vous recevrez une notification <strong>SMS + email</strong> si votre candidature est retenue. Délai moyen : 24 à 72h.</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:24px">
+      <button class="btn-full btn-orange" style="padding:13px" onclick="showPage('mes-candidatures')">Voir mes candidatures</button>
+      <button class="btn-full" style="background:var(--gray-100);color:var(--gray-600);padding:13px;border-radius:var(--radius-md);font-size:14px;font-weight:600;cursor:pointer;border:none;font-family:var(--font)" onclick="showPage('annonces')">Voir d'autres annonces</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- PAGE 5 : MES ANNONCES (DEMANDEUR)     -->
+<!-- ════════════════════════════════════════ -->
+<div class="page" id="page-mes-annonces">
+  <div style="padding:28px;max-width:1000px;margin:0 auto">
+    <div class="section-header">
+      <div>
+        <div class="section-title-lg">Mes annonces</div>
+        <div class="section-subtitle">Gérez vos projets publiés</div>
+      </div>
+      <button class="nav-btn nav-btn-primary" onclick="openModal()">+ Nouvelle annonce</button>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-num orange">3</div>
+        <div class="stat-label">Annonces actives</div>
+        <div class="stat-change up">+1 ce mois</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">20</div>
+        <div class="stat-label">Candidatures reçues</div>
+        <div class="stat-change up">+12 cette semaine</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num teal">1</div>
+        <div class="stat-label">En cours</div>
+        <div class="stat-change">Prestataire sélectionné</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">5</div>
+        <div class="stat-label">Terminées</div>
+        <div class="stat-change up">Toutes validées ✓</div>
+      </div>
+    </div>
+
+    <div class="annonces-grid">
+      <div class="annonce-card featured" onclick="showPage('detail-annonce')">
+        <div class="annonce-top">
+          <div class="annonce-cat">
+            <div class="cat-icon orange">🏗️</div>
+            <div><div style="font-size:11px;font-weight:600;color:var(--gray-400);text-transform:uppercase">Maçonnerie</div><div class="annonce-meta">Publié il y a 2h</div></div>
+          </div>
+          <div class="annonce-badges"><span class="badge badge-open">● Ouvert</span></div>
+        </div>
+        <div class="annonce-title">Construction villa 4 chambres — Calavi</div>
+        <div class="annonce-infos">
+          <div class="info-item">💰 <strong>12 000 000 FCFA</strong></div>
+          <div class="info-item">⏱️ <strong>8 mois</strong></div>
+        </div>
+        <div class="annonce-footer">
+          <div class="candidats-count">12 candidatures</div>
+          <div style="display:flex;gap:8px">
+            <button class="btn-sm" style="background:var(--gray-100);color:var(--gray-600)" onclick="event.stopPropagation()">✏️ Modifier</button>
+            <button class="btn-sm btn-sm-primary" onclick="event.stopPropagation();showPage('detail-annonce')">Voir candidatures</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="annonce-card" onclick="showPage('detail-annonce')">
+        <div class="annonce-top">
+          <div class="annonce-cat">
+            <div class="cat-icon teal">⚡</div>
+            <div><div style="font-size:11px;font-weight:600;color:var(--gray-400);text-transform:uppercase">Électricité</div><div class="annonce-meta">Publié il y a 5 jours</div></div>
+          </div>
+          <div class="annonce-badges"><span class="badge badge-selected">✔ Prestataire sélectionné</span></div>
+        </div>
+        <div class="annonce-title">Installation électrique — Bureau 200m²</div>
+        <div class="annonce-infos">
+          <div class="info-item">💰 <strong>900 000 FCFA</strong></div>
+          <div class="info-item">⏱️ <strong>3 semaines</strong></div>
+        </div>
+        <div class="annonce-footer">
+          <div class="candidats-count">8 candidatures</div>
+          <button class="btn-sm btn-sm-teal" onclick="event.stopPropagation()">📍 Suivi chantier</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- PAGE 6 : MES CANDIDATURES (PRESTATAIRE) -->
+<!-- ════════════════════════════════════════ -->
+<div class="page" id="page-mes-candidatures">
+  <div style="padding:28px;max-width:1000px;margin:0 auto">
+    <div class="section-header">
+      <div>
+        <div class="section-title-lg">Mes candidatures</div>
+        <div class="section-subtitle">Suivez l'état de vos propositions</div>
+      </div>
+      <button class="nav-btn nav-btn-primary" onclick="showPage('annonces')">🔍 Voir les annonces</button>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-num orange">5</div><div class="stat-label">Candidatures envoyées</div></div>
+      <div class="stat-card"><div class="stat-num teal">2</div><div class="stat-label">Sélectionné</div></div>
+      <div class="stat-card"><div class="stat-num">1</div><div class="stat-label">En attente</div></div>
+      <div class="stat-card"><div class="stat-num">2</div><div class="stat-label">Non retenu</div></div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:12px">
+
+      <div class="candidature-card selected-cand">
+        <div class="cand-top">
+          <div class="cat-icon teal" style="border-radius:var(--radius-sm)">🏗️</div>
+          <div class="cand-info">
+            <div class="cand-name">Rénovation appartement F4 — Cotonou</div>
+            <div class="cand-job">Candidature envoyée le 10 Mars 2026</div>
+            <div class="cand-badges">
+              <span class="badge" style="background:var(--teal-light);color:var(--teal-dark)">✔ Sélectionné</span>
+            </div>
+          </div>
+          <div class="cand-price">
+            <div class="price-val">3.2M FCFA</div>
+            <div class="price-delay">6 semaines</div>
+          </div>
+        </div>
+        <div class="alert alert-success" style="margin-bottom:12px">
+          <span>🎉</span> Félicitations ! Vous avez été sélectionné pour ce projet. Démarrage prévu le 15 Mars 2026.
+        </div>
+        <div class="cand-actions">
+          <button class="btn-sm btn-sm-teal">📍 Voir le chantier</button>
+          <button class="btn-sm btn-sm-outline">💬 Messagerie</button>
+        </div>
+      </div>
+
+      <div class="candidature-card">
+        <div class="cand-top">
+          <div class="cat-icon orange" style="border-radius:var(--radius-sm)">🏗️</div>
+          <div class="cand-info">
+            <div class="cand-name">Construction villa 4 chambres — Calavi</div>
+            <div class="cand-job">Candidature envoyée il y a 2h</div>
+            <div class="cand-badges">
+              <span class="badge badge-new">⏳ En cours d'examen</span>
+            </div>
+          </div>
+          <div class="cand-price">
+            <div class="price-val">10.5M FCFA</div>
+            <div class="price-delay">7 mois</div>
+          </div>
+        </div>
+        <div class="cand-actions">
+          <button class="btn-sm" style="background:var(--gray-100);color:var(--gray-600)">Voir l'annonce</button>
+          <button class="btn-sm btn-sm-outline">✏️ Modifier ma proposition</button>
+        </div>
+      </div>
+
+      <div class="candidature-card" style="opacity:0.7">
+        <div class="cand-top">
+          <div class="cat-icon amber" style="border-radius:var(--radius-sm)">🎨</div>
+          <div class="cand-info">
+            <div class="cand-name">Peinture villa 6 pièces — Porto-Novo</div>
+            <div class="cand-job">Candidature envoyée il y a 3 jours</div>
+            <div class="cand-badges">
+              <span class="badge badge-closed">✗ Non retenu</span>
+            </div>
+          </div>
+          <div class="cand-price">
+            <div class="price-val">820K FCFA</div>
+            <div class="price-delay">2 semaines</div>
+          </div>
+        </div>
+        <div class="cand-actions">
+          <button class="btn-sm" style="background:var(--gray-100);color:var(--gray-600)">Voir les retours</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- MODAL : PUBLIER UNE ANNONCE           -->
+<!-- ════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">📋 Publier une annonce</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="pub-steps">
+        <div class="pub-step active" id="ps1"><div class="pub-step-num active" id="psn1">1</div><div class="pub-step-label">Catégorie</div></div>
+        <div class="pub-step pending" id="ps2"><div class="pub-step-num pending" id="psn2">2</div><div class="pub-step-label">Détails</div></div>
+        <div class="pub-step pending" id="ps3"><div class="pub-step-num pending" id="psn3">3</div><div class="pub-step-label">Budget</div></div>
+        <div class="pub-step pending" id="ps4"><div class="pub-step-num pending" id="psn4">4</div><div class="pub-step-label">Publier</div></div>
+      </div>
+
+      <!-- Étape 1 : Catégorie -->
+      <div id="pub-step1">
+        <div style="font-size:14px;font-weight:600;margin-bottom:14px">Quel type de travaux cherchez-vous ?</div>
+        <div class="cat-grid">
+          <div class="cat-choice sel" onclick="selectCat(this)"><div class="cc-icon">🏗️</div><div class="cc-label">Maçonnerie</div></div>
+          <div class="cat-choice" onclick="selectCat(this)"><div class="cc-icon">⚡</div><div class="cc-label">Électricité</div></div>
+          <div class="cat-choice" onclick="selectCat(this)"><div class="cc-icon">🔧</div><div class="cc-label">Plomberie</div></div>
+          <div class="cat-choice" onclick="selectCat(this)"><div class="cc-icon">🪟</div><div class="cc-label">Menuiserie</div></div>
+          <div class="cat-choice" onclick="selectCat(this)"><div class="cc-icon">🎨</div><div class="cc-label">Peinture</div></div>
+          <div class="cat-choice" onclick="selectCat(this)"><div class="cc-icon">🏠</div><div class="cc-label">Carrelage</div></div>
+          <div class="cat-choice" onclick="selectCat(this)"><div class="cc-icon">📐</div><div class="cc-label">Architecture</div></div>
+          <div class="cat-choice" onclick="selectCat(this)"><div class="cc-icon">💻</div><div class="cc-label">Informatique</div></div>
+          <div class="cat-choice" onclick="selectCat(this)"><div class="cc-icon">✂️</div><div class="cc-label">Couture</div></div>
+        </div>
+      </div>
+
+      <!-- Étape 2 : Détails -->
+      <div id="pub-step2" style="display:none">
+        <div class="form-group">
+          <div class="form-label">Titre de l'annonce <span style="color:var(--orange)">*</span></div>
+          <input class="form-input" type="text" placeholder="Ex: Construction maison 3 chambres à Cotonou">
+        </div>
+        <div class="form-group">
+          <div class="form-label">Description détaillée <span style="color:var(--orange)">*</span></div>
+          <textarea class="form-textarea" placeholder="Décrivez votre projet en détail : superficie, matériaux, contraintes, ce que vous attendez du prestataire..."></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group" style="margin-bottom:0">
+            <div class="form-label">Localisation <span style="color:var(--orange)">*</span></div>
+            <input class="form-input" type="text" placeholder="Ville, quartier">
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <div class="form-label">Délai souhaité</div>
+            <input class="form-input" type="text" placeholder="Ex: 3 mois">
+          </div>
+        </div>
+      </div>
+
+      <!-- Étape 3 : Budget -->
+      <div id="pub-step3" style="display:none">
+        <div class="form-group">
+          <div class="form-label">Budget maximum (FCFA) <span style="color:var(--orange)">*</span></div>
+          <div class="price-input-wrap">
+            <input class="form-input" type="number" placeholder="Ex: 5000000" style="padding-right:55px">
+            <span class="price-currency">FCFA</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">Niveau d'urgence</div>
+          <select class="form-select">
+            <option>Normal — pas urgent</option>
+            <option>Modéré — dans les 3 mois</option>
+            <option>Urgent — dans le mois</option>
+            <option>Très urgent — dès que possible</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <div class="form-label">Documents joints (plans, photos)</div>
+          <div class="upload-zone">
+            <div style="font-size:24px;margin-bottom:6px">📎</div>
+            <div class="upload-text">Glissez vos fichiers ou <strong>parcourez</strong></div>
+            <div class="upload-hint">Plans, photos du terrain · PNG, JPG, PDF · Max 10 Mo</div>
+          </div>
+        </div>
+        <div style="background:var(--orange-light);border-radius:var(--radius-sm);padding:14px;font-size:13px;color:var(--orange-dark);font-family:var(--font-body);line-height:1.6">
+          💡 <strong>Commission BatiConnect :</strong> 8% du montant final de la mission, prélevés automatiquement lors du paiement.
+        </div>
+      </div>
+
+      <!-- Étape 4 : Confirmation -->
+      <div id="pub-step4" style="display:none;text-align:center;padding:20px 0">
+        <div style="font-size:44px;margin-bottom:16px">🎉</div>
+        <div style="font-size:18px;font-weight:700;margin-bottom:8px">Annonce prête à publier !</div>
+        <div style="font-size:13px;color:var(--gray-600);font-family:var(--font-body);line-height:1.6;margin-bottom:24px">
+          Votre annonce sera visible par tous les prestataires vérifiés de BatiConnect. Vous recevrez une notification à chaque nouvelle candidature.
+        </div>
+        <button class="btn-full btn-orange" style="padding:14px;font-size:15px" onclick="publishAnnonce()">🚀 Publier l'annonce maintenant</button>
+      </div>
+    </div>
+
+    <div class="modal-footer" id="modal-footer">
+      <button class="btn-sm btn-sm-outline" id="btn-prev" onclick="pubPrev()" style="display:none">← Retour</button>
+      <button class="btn-sm btn-sm-primary" id="btn-next" onclick="pubNext()">Continuer →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentPubStep = 1;
+  const totalPubSteps = 4;
+
+  function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const p = document.getElementById('page-' + id);
+    if (p) { p.classList.add('active'); window.scrollTo({top:0,behavior:'smooth'}); }
+  }
+
+  function openModal() {
+    document.getElementById('modal-overlay').classList.add('open');
+    currentPubStep = 1;
+    updatePubSteps();
+  }
+  function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+  function closeModalOutside(e) { if (e.target === document.getElementById('modal-overlay')) closeModal(); }
+
+  function pubNext() {
+    if (currentPubStep < totalPubSteps) { currentPubStep++; updatePubSteps(); }
+  }
+  function pubPrev() {
+    if (currentPubStep > 1) { currentPubStep--; updatePubSteps(); }
+  }
+
+  function updatePubSteps() {
+    for (let i = 1; i <= totalPubSteps; i++) {
+      const stepEl = document.getElementById('pub-step' + i);
+      const numEl = document.getElementById('psn' + i);
+      const stepWrap = document.getElementById('ps' + i);
+      if (stepEl) stepEl.style.display = (i === currentPubStep) ? 'block' : 'none';
+      if (numEl) {
+        numEl.className = 'pub-step-num ' + (i < currentPubStep ? 'done' : i === currentPubStep ? 'active' : 'pending');
+        numEl.textContent = i < currentPubStep ? '✓' : i;
+      }
+      if (stepWrap) {
+        stepWrap.className = 'pub-step ' + (i < currentPubStep ? 'done' : i === currentPubStep ? 'active' : 'pending');
+      }
+    }
+    document.getElementById('btn-prev').style.display = currentPubStep > 1 ? 'inline-flex' : 'none';
+    document.getElementById('btn-next').style.display = currentPubStep < totalPubSteps ? 'inline-flex' : 'none';
+    document.getElementById('modal-footer').style.display = currentPubStep === totalPubSteps ? 'none' : 'flex';
+  }
+
+  function publishAnnonce() {
+    closeModal();
+    showPage('mes-annonces');
+  }
+
+  function selectCat(el) {
+    el.closest('.cat-grid').querySelectorAll('.cat-choice').forEach(c => c.classList.remove('sel'));
+    el.classList.add('sel');
+  }
+
+  function filterCat(btn, cat) {
+    document.querySelectorAll('.sidebar-item').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  function toggleFilter(btn) {
+    btn.classList.toggle('active');
+  }
+
+  function selectCandidat() {
+    alert('✅ Prestataire sélectionné ! Un contrat numérique sera généré automatiquement et le paiement ESCROW sera activé.');
+  }
+</script>
+</body>
+</html>

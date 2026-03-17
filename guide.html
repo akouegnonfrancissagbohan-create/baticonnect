@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BatiConnect — Guide de déploiement</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: #F9F8F5; color: #2C2C2A; line-height: 1.7; }
+  .container { max-width: 780px; margin: 0 auto; padding: 40px 24px 80px; }
+  h1 { font-family: 'Sora', sans-serif; font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+  h2 { font-family: 'Sora', sans-serif; font-size: 18px; font-weight: 700; margin: 32px 0 14px; color: #D85A30; display: flex; align-items: center; gap: 10px; }
+  h3 { font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 600; margin: 20px 0 8px; }
+  p { font-size: 14px; color: #5F5E5A; margin-bottom: 12px; }
+  .hero { background: linear-gradient(135deg, #1a0f0a, #993C1D 60%, #D87040); border-radius: 16px; padding: 28px; color: white; margin-bottom: 32px; }
+  .hero h1 { color: white; margin-bottom: 6px; }
+  .hero p { color: rgba(255,255,255,0.75); margin: 0; font-size: 15px; }
+  .phase { background: white; border-radius: 16px; padding: 24px; margin-bottom: 20px; border: 1.5px solid #F1EFE8; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .phase-header { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+  .phase-num { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Sora', sans-serif; font-size: 16px; font-weight: 700; color: white; flex-shrink: 0; }
+  .phase-num.done { background: #1D9E75; }
+  .phase-num.todo { background: #D85A30; }
+  .phase-num.later { background: #888780; }
+  .phase-title { font-family: 'Sora', sans-serif; font-size: 16px; font-weight: 700; }
+  .phase-status { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
+  .status-done { background: #E1F5EE; color: #085041; }
+  .status-todo { background: #FAECE7; color: #993C1D; }
+  .status-later { background: #F1EFE8; color: #5F5E5A; }
+  .step { display: flex; gap: 12px; margin-bottom: 12px; align-items: flex-start; }
+  .step-num { width: 24px; height: 24px; border-radius: 50%; background: #D85A30; color: white; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; font-family: 'Sora', sans-serif; flex-shrink: 0; margin-top: 2px; }
+  .step-num.green { background: #1D9E75; }
+  .step-text { font-size: 14px; color: #2C2C2A; flex: 1; }
+  .step-text code { background: #F1EFE8; padding: 2px 8px; border-radius: 6px; font-size: 12px; font-family: monospace; color: #D85A30; }
+  .step-text strong { color: #2C2C2A; font-weight: 600; }
+  .alert { padding: 12px 16px; border-radius: 10px; font-size: 13px; margin: 12px 0; display: flex; gap: 10px; }
+  .alert-warning { background: #FAEEDA; color: #633806; border-left: 4px solid #BA7517; }
+  .alert-success { background: #E1F5EE; color: #085041; border-left: 4px solid #1D9E75; }
+  .alert-info { background: #FAECE7; color: #993C1D; border-left: 4px solid #D85A30; }
+  .divider { height: 1px; background: #F1EFE8; margin: 24px 0; }
+  .summary-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .summary-table th { text-align: left; padding: 10px 12px; background: #F9F8F5; font-family: 'Sora', sans-serif; font-size: 11px; font-weight: 600; color: #888780; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid #F1EFE8; }
+  .summary-table td { padding: 11px 12px; border-bottom: 1px solid #F1EFE8; vertical-align: middle; }
+  .summary-table tr:last-child td { border-bottom: none; }
+  .tag { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .tag-done { background: #E1F5EE; color: #085041; }
+  .tag-todo { background: #FAECE7; color: #993C1D; }
+  .tag-soon { background: #F1EFE8; color: #5F5E5A; }
+  .big-btn { display: block; background: #D85A30; color: white; padding: 14px 24px; border-radius: 12px; font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 600; text-align: center; text-decoration: none; margin-top: 12px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="hero">
+    <h1>📋 Guide BatiConnect — Étape par étape</h1>
+    <p>Ce document résume tout ce qu'on a fait et ce qu'il reste à faire, dans l'ordre. Gardez-le comme référence.</p>
+  </div>
+
+  <!-- RÉSUMÉ ÉTAT ACTUEL -->
+  <h2>📊 État actuel du projet</h2>
+  <table class="summary-table">
+    <thead><tr><th>Élément</th><th>Statut</th><th>Détail</th></tr></thead>
+    <tbody>
+      <tr><td>🎨 Prototype visuel (8 modules HTML)</td><td><span class="tag tag-done">✅ Fait</span></td><td>Tous les écrans sont créés</td></tr>
+      <tr><td>🌐 Site en ligne (Netlify)</td><td><span class="tag tag-done">✅ Fait</span></td><td>Prototype visible en ligne</td></tr>
+      <tr><td>🗄️ Base de données (Supabase)</td><td><span class="tag tag-done">✅ Fait</span></td><td>13 tables créées</td></tr>
+      <tr><td>🔐 Connexion Supabase → modules</td><td><span class="tag tag-todo">🔄 En cours</span></td><td>À finaliser proprement</td></tr>
+      <tr><td>📧 Emails automatiques (Resend)</td><td><span class="tag tag-soon">⏳ À faire</span></td><td>Prochaine étape</td></tr>
+      <tr><td>💳 Paiements réels (CinetPay)</td><td><span class="tag tag-soon">⏳ À faire</span></td><td>Après les emails</td></tr>
+      <tr><td>📱 Application mobile</td><td><span class="tag tag-soon">⏳ À faire</span></td><td>Dernière étape</td></tr>
+    </tbody>
+  </table>
+
+  <div class="divider"></div>
+
+  <!-- PHASE 1 -->
+  <div class="phase">
+    <div class="phase-header">
+      <div class="phase-num done">1</div>
+      <div>
+        <div class="phase-title">Prototype visuel — Les 8 modules HTML</div>
+        <span class="phase-status status-done">✅ Terminé</span>
+      </div>
+    </div>
+    <p>Les 8 fichiers HTML ont été créés. Ils fonctionnent comme une démo visuelle complète avec tous les écrans.</p>
+    <div class="alert alert-success">
+      <span>✅</span>
+      <div><strong>Résultat :</strong> Le dossier <code>BatiConnect-Final</code> contient index.html + 8 modules fonctionnels visuellement.</div>
+    </div>
+  </div>
+
+  <!-- PHASE 2 -->
+  <div class="phase">
+    <div class="phase-header">
+      <div class="phase-num done">2</div>
+      <div>
+        <div class="phase-title">Mise en ligne sur Netlify</div>
+        <span class="phase-status status-done">✅ Terminé</span>
+      </div>
+    </div>
+    <p>Le prototype est accessible en ligne via votre lien Netlify.</p>
+    <div class="alert alert-success">
+      <span>✅</span>
+      <div><strong>Pour mettre à jour votre site :</strong> Allez sur <strong>app.netlify.com</strong> → votre site → onglet <strong>Deploys</strong> → faites glisser à nouveau le dossier <code>BatiConnect-Final</code>.</div>
+    </div>
+  </div>
+
+  <!-- PHASE 3 -->
+  <div class="phase">
+    <div class="phase-header">
+      <div class="phase-num done">3</div>
+      <div>
+        <div class="phase-title">Base de données Supabase</div>
+        <span class="phase-status status-done">✅ Terminé</span>
+      </div>
+    </div>
+    <p>Votre base de données est créée avec 13 tables : utilisateurs, annonces, missions, paiements, messages, etc.</p>
+    <div class="alert alert-success">
+      <span>✅</span>
+      <div>
+        <strong>Vos identifiants Supabase :</strong><br>
+        URL : <code>https://qlpsantpdtarnrqnjmik.supabase.co</code><br>
+        Clé : <code>sb_publishable_7TrwU7Q2o69F1R6xKy3-Qg_jvCgSElW</code>
+      </div>
+    </div>
+  </div>
+
+  <!-- PHASE 4 -->
+  <div class="phase">
+    <div class="phase-header">
+      <div class="phase-num todo">4</div>
+      <div>
+        <div class="phase-title">Connexion Supabase — À faire maintenant</div>
+        <span class="phase-status status-todo">🔄 En cours</span>
+      </div>
+    </div>
+
+    <div class="alert alert-warning">
+      <span>⚠️</span>
+      <div><strong>C'est ici qu'on en est.</strong> On va repartir proprement avec un nouveau ZIP complet et fonctionnel.</div>
+    </div>
+
+    <h3>Ce que vous devez faire :</h3>
+
+    <div class="step">
+      <div class="step-num green">1</div>
+      <div class="step-text">Téléchargez le nouveau ZIP <strong>"BatiConnect-V2-Final.zip"</strong> que Claude va vous préparer juste après ce guide</div>
+    </div>
+
+    <div class="step">
+      <div class="step-num green">2</div>
+      <div class="step-text"><strong>Extrayez le ZIP</strong> sur votre bureau → vous obtenez un dossier <code>BatiConnect-V2</code></div>
+    </div>
+
+    <div class="step">
+      <div class="step-num green">3</div>
+      <div class="step-text">Allez sur <strong>app.netlify.com</strong> → votre site → onglet <strong>Deploys</strong> → faites glisser le dossier <code>BatiConnect-V2</code></div>
+    </div>
+
+    <div class="step">
+      <div class="step-num green">4</div>
+      <div class="step-text">Attendez 15 secondes → votre site est mis à jour ✅</div>
+    </div>
+
+    <div class="step">
+      <div class="step-num green">5</div>
+      <div class="step-text"><strong>Testez l'inscription :</strong> Ouvrez votre site → Authentification → Créer un compte → remplissez le formulaire → cliquez le bouton</div>
+    </div>
+
+    <div class="step">
+      <div class="step-num green">6</div>
+      <div class="step-text"><strong>Vérifiez dans Supabase :</strong> supabase.com → votre projet → <strong>Authentication</strong> → <strong>Users</strong> → votre compte doit apparaître</div>
+    </div>
+  </div>
+
+  <!-- PHASE 5 -->
+  <div class="phase">
+    <div class="phase-header">
+      <div class="phase-num later">5</div>
+      <div>
+        <div class="phase-title">Emails automatiques — Resend</div>
+        <span class="phase-status status-later">⏳ Prochaine étape</span>
+      </div>
+    </div>
+    <p>Une fois la Phase 4 validée, on configurera les emails automatiques : confirmation d'inscription, alerte de candidature, validation de paiement, etc.</p>
+  </div>
+
+  <!-- PHASE 6 -->
+  <div class="phase">
+    <div class="phase-header">
+      <div class="phase-num later">6</div>
+      <div>
+        <div class="phase-title">Paiements réels — CinetPay / PayDunya</div>
+        <span class="phase-status status-later">⏳ Après Phase 5</span>
+      </div>
+    </div>
+    <p>Intégration des paiements Mobile Money réels (MTN, Moov, Orange) pour le système de Paiement Sécurisé.</p>
+  </div>
+
+  <!-- PHASE 7 -->
+  <div class="phase">
+    <div class="phase-header">
+      <div class="phase-num later">7</div>
+      <div>
+        <div class="phase-title">Application mobile — Android & iPhone</div>
+        <span class="phase-status status-later">⏳ Dernière étape</span>
+      </div>
+    </div>
+    <p>Transformation du site web en application mobile installable sur Android et iPhone.</p>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="alert alert-info">
+    <span>💡</span>
+    <div><strong>Règle simple :</strong> On avance phase par phase. Pas de précipitation. Chaque phase doit être testée et validée avant de passer à la suivante.</div>
+  </div>
+
+</div>
+</body>
+</html>

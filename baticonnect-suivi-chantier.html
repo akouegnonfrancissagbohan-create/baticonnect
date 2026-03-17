@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BatiConnect — Suivi de Chantier</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const db = supabase.createClient("https://qlpsantpdtarnrqnjmik.supabase.co", "sb_publishable_7TrwU7Q2o69F1R6xKy3-Qg_jvCgSElW");
+  function toast(msg, type) {
+    var colors = {success:"#1D9E75", error:"#A32D2D", info:"#D85A30"};
+    var icons  = {success:"&#x2705;", error:"&#x274C;", info:"&#x1F4A1;"};
+    type = type || "success";
+    var el = document.createElement("div");
+    el.style.cssText = "position:fixed;bottom:24px;right:24px;z-index:9999;background:#fff;border-left:4px solid " + (colors[type]||"#1D9E75") + ";padding:14px 18px;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.15);font-family:Sora,sans-serif;font-size:13px;display:flex;align-items:center;gap:10px;max-width:340px";
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(function(){ el.remove(); }, 3500);
+  }
+  async function getUser() {
+    var r = await db.auth.getUser();
+    return r.data.user;
+  }
+  function fmtFCFA(n) {
+    return new Intl.NumberFormat("fr-FR").format(n) + " FCFA";
+  }
+</script>
+<style>@keyframes toastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}</style>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=DM+Sans:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --orange: #D85A30; --orange-light: #FAECE7; --orange-dark: #993C1D;
+    --teal: #1D9E75; --teal-light: #E1F5EE; --teal-dark: #085041;
+    --amber: #BA7517; --amber-light: #FAEEDA;
+    --red: #A32D2D; --red-light: #FCEBEB;
+    --blue: #185FA5; --blue-light: #E6F1FB;
+    --gray-50: #F9F8F5; --gray-100: #F1EFE8; --gray-200: #D3D1C7;
+    --gray-400: #888780; --gray-600: #5F5E5A; --gray-900: #2C2C2A;
+    --white: #FFFFFF;
+    --font: 'Sora', sans-serif; --font-body: 'DM Sans', sans-serif;
+    --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px; --radius-xl: 24px;
+    --shadow-sm: 0 1px 4px rgba(0,0,0,0.06); --shadow-md: 0 4px 20px rgba(0,0,0,0.08);
+    --shadow-lg: 0 8px 40px rgba(0,0,0,0.12);
+  }
+  body { font-family: var(--font); background: var(--gray-50); color: var(--gray-900); min-height: 100vh; }
+
+  /* NAVBAR */
+  .navbar { background: var(--white); border-bottom: 1px solid var(--gray-100); padding: 0 24px; height: 60px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow-sm); }
+  .logo { display: flex; align-items: center; gap: 9px; cursor: pointer; }
+  .logo-icon { width: 34px; height: 34px; background: var(--orange); border-radius: 9px; display: flex; align-items: center; justify-content: center; }
+  .logo-icon svg { width: 17px; height: 17px; fill: white; }
+  .logo-text { font-size: 16px; font-weight: 700; }
+  .logo-text span { color: var(--orange); }
+  .nav-actions { display: flex; align-items: center; gap: 8px; }
+  .nav-btn { padding: 8px 14px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 500; cursor: pointer; border: none; font-family: var(--font); transition: all 0.18s; }
+  .nav-btn-primary { background: var(--orange); color: white; }
+  .nav-btn-primary:hover { background: var(--orange-dark); }
+  .nav-btn-ghost { background: transparent; color: var(--gray-600); }
+  .nav-btn-ghost:hover { background: var(--gray-100); }
+
+  /* PAGES */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* LAYOUT */
+  .container { max-width: 1060px; margin: 0 auto; padding: 28px 24px 60px; }
+  .two-col { display: grid; grid-template-columns: 1fr 340px; gap: 20px; align-items: start; }
+
+  /* CARDS */
+  .card { background: var(--white); border: 1px solid var(--gray-100); border-radius: var(--radius-lg); padding: 22px; box-shadow: var(--shadow-sm); margin-bottom: 16px; }
+  .card-title { font-size: 14px; font-weight: 600; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+
+  /* BADGE */
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 600; }
+  .badge-teal { background: var(--teal-light); color: var(--teal-dark); }
+  .badge-orange { background: var(--orange-light); color: var(--orange-dark); }
+  .badge-amber { background: var(--amber-light); color: #633806; }
+  .badge-red { background: var(--red-light); color: var(--red); }
+  .badge-blue { background: var(--blue-light); color: var(--blue); }
+  .badge-gray { background: var(--gray-100); color: var(--gray-600); }
+
+  /* ALERT */
+  .alert { padding: 12px 15px; border-radius: var(--radius-sm); font-size: 13px; font-family: var(--font-body); line-height: 1.6; margin-bottom: 14px; display: flex; gap: 10px; }
+  .alert-info { background: var(--orange-light); color: var(--orange-dark); }
+  .alert-success { background: var(--teal-light); color: var(--teal-dark); }
+  .alert-warning { background: var(--amber-light); color: #633806; }
+
+  /* HERO MISSION */
+  .mission-hero { background: linear-gradient(135deg, #1a0f0a, var(--orange-dark) 60%, #D87040); border-radius: var(--radius-xl); padding: 26px; color: white; margin-bottom: 20px; position: relative; overflow: hidden; }
+  .mission-hero::before { content: ''; position: absolute; top: -50px; right: -50px; width: 200px; height: 200px; border-radius: 50%; background: rgba(255,255,255,0.05); }
+  .mission-hero::after { content: ''; position: absolute; bottom: -40px; left: -30px; width: 150px; height: 150px; border-radius: 50%; background: rgba(255,255,255,0.03); }
+  .mh-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; position: relative; z-index: 1; }
+  .mh-title { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .mh-sub { font-size: 13px; color: rgba(255,255,255,0.7); }
+  .mh-badge { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); color: white; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .mh-stats { display: flex; gap: 24px; position: relative; z-index: 1; }
+  .mh-stat { }
+  .mh-stat-val { font-size: 22px; font-weight: 700; }
+  .mh-stat-label { font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 2px; }
+  .mh-progress { margin-top: 18px; position: relative; z-index: 1; }
+  .mh-prog-label { display: flex; justify-content: space-between; font-size: 12px; color: rgba(255,255,255,0.7); margin-bottom: 7px; }
+  .mh-prog-bar { height: 8px; background: rgba(255,255,255,0.2); border-radius: 4px; overflow: hidden; }
+  .mh-prog-fill { height: 100%; background: white; border-radius: 4px; transition: width 0.6s; }
+
+  /* JALONS TIMELINE */
+  .timeline { display: flex; flex-direction: column; gap: 0; }
+  .tl-item { display: flex; gap: 14px; position: relative; padding-bottom: 22px; }
+  .tl-item:last-child { padding-bottom: 0; }
+  .tl-item:not(:last-child)::after { content: ''; position: absolute; left: 15px; top: 32px; bottom: 0; width: 2px; background: var(--gray-200); }
+  .tl-item.done:not(:last-child)::after { background: var(--teal); }
+  .tl-item.active:not(:last-child)::after { background: linear-gradient(to bottom, var(--orange), var(--gray-200)); }
+  .tl-dot { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; z-index: 1; }
+  .tl-dot.done { background: var(--teal); color: white; }
+  .tl-dot.active { background: var(--orange); color: white; animation: pulse 2s infinite; }
+  .tl-dot.pending { background: var(--gray-100); color: var(--gray-400); border: 2px solid var(--gray-200); }
+  @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(216,90,48,0.3)} 50%{box-shadow:0 0 0 8px rgba(216,90,48,0)} }
+  .tl-body { flex: 1; }
+  .tl-title { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+  .tl-desc { font-size: 12px; color: var(--gray-400); font-family: var(--font-body); margin-bottom: 8px; }
+  .tl-photos { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .tl-photo { width: 56px; height: 56px; border-radius: var(--radius-sm); background: var(--gray-100); display: flex; align-items: center; justify-content: center; font-size: 22px; cursor: pointer; border: 2px solid var(--gray-100); transition: border-color 0.18s; }
+  .tl-photo:hover { border-color: var(--orange); }
+  .tl-meta { font-size: 11px; color: var(--gray-400); font-family: var(--font-body); }
+
+  /* RAPPORT QUOTIDIEN */
+  .rapport-grid { display: grid; gap: 12px; }
+  .rapport-card { background: var(--white); border: 1.5px solid var(--gray-100); border-radius: var(--radius-lg); padding: 16px; transition: all 0.2s; cursor: pointer; }
+  .rapport-card:hover { border-color: var(--orange); box-shadow: var(--shadow-md); }
+  .rapport-card.latest { border-color: var(--orange); }
+  .rc-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .rc-date { font-size: 12px; font-weight: 600; color: var(--gray-900); display: flex; align-items: center; gap: 6px; }
+  .rc-photos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 10px; border-radius: var(--radius-sm); overflow: hidden; }
+  .rc-photo { aspect-ratio: 1; background: var(--gray-100); display: flex; align-items: center; justify-content: center; font-size: 20px; position: relative; cursor: pointer; }
+  .rc-more { position: absolute; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; font-weight: 700; }
+  .rc-note { font-size: 13px; color: var(--gray-600); font-family: var(--font-body); line-height: 1.6; margin-bottom: 10px; }
+  .rc-stats { display: flex; gap: 14px; }
+  .rc-stat { font-size: 11px; color: var(--gray-400); font-family: var(--font-body); display: flex; align-items: center; gap: 4px; }
+  .rc-stat strong { color: var(--gray-900); font-weight: 500; }
+
+  /* UPLOAD RAPPORT */
+  .upload-zone { border: 2px dashed var(--gray-200); border-radius: var(--radius-md); padding: 24px; text-align: center; cursor: pointer; transition: all 0.2s; }
+  .upload-zone:hover { border-color: var(--orange); background: var(--orange-light); }
+  .upload-icon { font-size: 32px; margin-bottom: 8px; }
+  .upload-text { font-size: 13px; color: var(--gray-600); font-family: var(--font-body); }
+  .upload-text strong { color: var(--orange); }
+  .upload-hint { font-size: 11px; color: var(--gray-400); margin-top: 4px; }
+
+  /* STATS CHANTIER */
+  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+  .sc { background: var(--white); border: 1px solid var(--gray-100); border-radius: var(--radius-lg); padding: 16px; box-shadow: var(--shadow-sm); }
+  .sc-num { font-size: 22px; font-weight: 700; margin-bottom: 2px; }
+  .sc-num.orange { color: var(--orange); }
+  .sc-num.teal { color: var(--teal); }
+  .sc-num.red { color: var(--red); }
+  .sc-label { font-size: 11px; color: var(--gray-400); font-family: var(--font-body); }
+
+  /* PROGRESS */
+  .prog-wrap { margin-bottom: 12px; }
+  .prog-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--gray-400); margin-bottom: 5px; font-family: var(--font-body); }
+  .prog-bar { height: 8px; background: var(--gray-100); border-radius: 4px; overflow: hidden; }
+  .prog-fill { height: 100%; border-radius: 4px; transition: width 0.6s; }
+  .pf-orange { background: var(--orange); }
+  .pf-teal { background: var(--teal); }
+  .pf-amber { background: var(--amber); }
+  .pf-red { background: var(--red); }
+
+  /* STICKY SIDEBAR */
+  .sticky-box { position: sticky; top: 80px; display: flex; flex-direction: column; gap: 14px; }
+  .info-item { display: flex; justify-content: space-between; align-items: center; font-size: 13px; padding: 8px 0; border-bottom: 1px solid var(--gray-100); font-family: var(--font-body); }
+  .info-item:last-child { border-bottom: none; }
+  .info-label { color: var(--gray-400); }
+  .info-val { font-weight: 500; color: var(--gray-900); }
+
+  /* FORMS */
+  .form-group { margin-bottom: 14px; }
+  .form-label { font-size: 13px; font-weight: 500; margin-bottom: 6px; display: block; }
+  .form-input, .form-select, .form-textarea { width: 100%; padding: 10px 13px; border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm); font-size: 13px; font-family: var(--font-body); color: var(--gray-900); background: var(--white); outline: none; transition: border-color 0.2s; }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(216,90,48,0.09); }
+  .form-textarea { resize: vertical; min-height: 80px; line-height: 1.6; }
+  .form-select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%23888780' d='M5 7L0 2h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* BTNS */
+  .btn { padding: 10px 18px; border-radius: var(--radius-md); font-size: 13px; font-weight: 600; cursor: pointer; border: none; font-family: var(--font); transition: all 0.2s; display: inline-flex; align-items: center; gap: 7px; }
+  .btn-orange { background: var(--orange); color: white; }
+  .btn-orange:hover { background: var(--orange-dark); transform: translateY(-1px); }
+  .btn-teal { background: var(--teal); color: white; }
+  .btn-teal:hover { background: var(--teal-dark); }
+  .btn-outline { background: var(--white); color: var(--gray-600); border: 1.5px solid var(--gray-200); }
+  .btn-outline:hover { border-color: var(--orange); color: var(--orange); }
+  .btn-full { width: 100%; justify-content: center; padding: 12px; font-size: 14px; }
+
+  /* MAP placeholder */
+  .map-box { height: 180px; border-radius: var(--radius-md); background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px; border: 1px solid #a5d6a7; margin-bottom: 12px; }
+  .map-marker { font-size: 32px; }
+  .map-label { font-size: 12px; color: #2e7d32; font-weight: 500; font-family: var(--font-body); }
+  .map-sub { font-size: 11px; color: #558b2f; font-family: var(--font-body); }
+
+  /* MODAL */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--white); border-radius: var(--radius-xl); width: 100%; max-width: 580px; max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-lg); }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border-bottom: 1px solid var(--gray-100); position: sticky; top: 0; background: var(--white); z-index: 1; }
+  .modal-title { font-size: 16px; font-weight: 700; }
+  .modal-close { width: 30px; height: 30px; border-radius: 50%; border: none; background: var(--gray-100); cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; }
+  .modal-close:hover { background: var(--gray-200); }
+  .modal-body { padding: 22px 24px; }
+  .modal-footer { padding: 14px 24px; border-top: 1px solid var(--gray-100); display: flex; gap: 10px; justify-content: flex-end; }
+
+  /* Tabs */
+  .tabs { display: flex; background: var(--gray-100); border-radius: var(--radius-md); padding: 4px; margin-bottom: 22px; gap: 4px; }
+  .tab { flex: 1; padding: 8px 10px; border-radius: 10px; font-size: 12px; font-weight: 500; cursor: pointer; border: none; background: transparent; color: var(--gray-600); font-family: var(--font); transition: all 0.18s; text-align: center; }
+  .tab.active { background: var(--white); color: var(--orange); box-shadow: var(--shadow-sm); }
+
+  @media (max-width: 860px) {
+    .two-col { grid-template-columns: 1fr; }
+    .stats-row { grid-template-columns: 1fr 1fr; }
+    .form-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="logo" onclick="showPage('dashboard')">
+    <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22" fill="none" stroke="white" stroke-width="1.5"/></svg></div>
+    <span class="logo-text">Bati<span>Connect</span></span>
+  </div>
+  <div style="font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px">📍 Suivi de Chantier</div>
+  <div class="nav-actions">
+    <button class="nav-btn nav-btn-ghost" onclick="showPage('dashboard')">Mes chantiers</button>
+    <button class="nav-btn nav-btn-primary" onclick="openRapport()">📷 Envoyer un rapport</button>
+  </div>
+</nav>
+
+<!-- ════════════════════════════════════ -->
+<!-- PAGE 1 : LISTE DES CHANTIERS       -->
+<!-- ════════════════════════════════════ -->
+<div class="page active" id="page-dashboard">
+  <div class="container" style="max-width:900px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+      <div>
+        <div style="font-size:22px;font-weight:700;margin-bottom:3px">📍 Mes chantiers</div>
+        <div style="font-size:14px;color:var(--gray-400);font-family:var(--font-body)">Suivez l'avancement de vos missions en temps réel</div>
+      </div>
+      <button class="btn btn-orange" onclick="openRapport()">📷 Nouveau rapport</button>
+    </div>
+
+    <div class="stats-row" style="grid-template-columns:repeat(4,1fr)">
+      <div class="sc"><div class="sc-num orange">3</div><div class="sc-label">Chantiers actifs</div></div>
+      <div class="sc"><div class="sc-num teal">12</div><div class="sc-label">Rapports ce mois</div></div>
+      <div class="sc"><div class="sc-num">68%</div><div class="sc-label">Avancement moyen</div></div>
+      <div class="sc"><div class="sc-num red">1</div><div class="sc-label">Retard signalé</div></div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:14px">
+
+      <!-- Chantier 1 -->
+      <div style="background:var(--white);border:1.5px solid var(--orange);border-radius:var(--radius-lg);padding:20px;cursor:pointer;box-shadow:var(--shadow-md)" onclick="showPage('suivi-chantier')">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:46px;height:46px;border-radius:var(--radius-md);background:var(--orange-light);display:flex;align-items:center;justify-content:center;font-size:22px">🏗️</div>
+            <div>
+              <div style="font-size:15px;font-weight:700">Rénovation appartement F4 — Cotonou</div>
+              <div style="font-size:12px;color:var(--gray-400);font-family:var(--font-body);margin-top:2px">Client : Marc Traoré (Paris) · Artisan : Kofi Adetokunbo</div>
+            </div>
+          </div>
+          <span class="badge badge-orange">● En cours</span>
+        </div>
+        <div style="margin-bottom:14px">
+          <div class="prog-row"><span>Avancement global</span><span style="color:var(--orange);font-weight:600">65%</span></div>
+          <div class="prog-bar"><div class="prog-fill pf-orange" style="width:65%"></div></div>
+        </div>
+        <div style="display:flex;gap:18px;flex-wrap:wrap">
+          <div style="font-size:12px;color:var(--gray-600);font-family:var(--font-body);display:flex;align-items:center;gap:5px">💰 <strong>3 200 000 FCFA</strong></div>
+          <div style="font-size:12px;color:var(--gray-600);font-family:var(--font-body);display:flex;align-items:center;gap:5px">📅 Fin prévue : <strong>Avr. 2026</strong></div>
+          <div style="font-size:12px;color:var(--gray-600);font-family:var(--font-body);display:flex;align-items:center;gap:5px">📷 Dernier rapport : <strong>Aujourd'hui</strong></div>
+          <div style="font-size:12px;color:var(--gray-600);font-family:var(--font-body);display:flex;align-items:center;gap:5px">📍 <strong>Cotonou, Bénin</strong></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid var(--gray-100)">
+          <button class="btn btn-orange" style="font-size:12px;padding:7px 14px" onclick="event.stopPropagation();showPage('suivi-chantier')">Voir le suivi →</button>
+          <button class="btn btn-outline" style="font-size:12px;padding:7px 14px" onclick="event.stopPropagation();openRapport()">📷 Ajouter rapport</button>
+        </div>
+      </div>
+
+      <!-- Chantier 2 -->
+      <div style="background:var(--white);border:1.5px solid var(--amber);border-radius:var(--radius-lg);padding:20px;cursor:pointer" onclick="showPage('suivi-chantier')">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:46px;height:46px;border-radius:var(--radius-md);background:var(--amber-light);display:flex;align-items:center;justify-content:center;font-size:22px">🏠</div>
+            <div>
+              <div style="font-size:15px;font-weight:700">Villa 4 chambres — Abomey-Calavi</div>
+              <div style="font-size:12px;color:var(--gray-400);font-family:var(--font-body);margin-top:2px">Client : Kani Diallo (Canada) · Artisan : Moussa Soumahoro</div>
+            </div>
+          </div>
+          <span class="badge badge-red">⚠ Retard</span>
+        </div>
+        <div style="margin-bottom:14px">
+          <div class="prog-row"><span>Avancement global</span><span style="color:var(--amber);font-weight:600">42%</span></div>
+          <div class="prog-bar"><div class="prog-fill pf-amber" style="width:42%"></div></div>
+        </div>
+        <div style="display:flex;gap:18px;flex-wrap:wrap">
+          <div style="font-size:12px;color:var(--gray-600);font-family:var(--font-body)">💰 <strong>12 000 000 FCFA</strong></div>
+          <div style="font-size:12px;color:var(--red);font-family:var(--font-body)">⚠️ Retard : <strong>+12 jours</strong></div>
+          <div style="font-size:12px;color:var(--gray-600);font-family:var(--font-body)">📷 Dernier rapport : <strong>Hier</strong></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid var(--gray-100)">
+          <button class="btn btn-orange" style="font-size:12px;padding:7px 14px" onclick="event.stopPropagation();showPage('suivi-chantier')">Voir le suivi →</button>
+          <button class="btn" style="background:var(--red-light);color:var(--red);font-size:12px;padding:7px 14px" onclick="event.stopPropagation()">⚠️ Signaler retard</button>
+        </div>
+      </div>
+
+      <!-- Chantier 3 -->
+      <div style="background:var(--white);border:1.5px solid var(--gray-100);border-radius:var(--radius-lg);padding:20px;cursor:pointer" onclick="showPage('suivi-chantier')">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:46px;height:46px;border-radius:var(--radius-md);background:var(--teal-light);display:flex;align-items:center;justify-content:center;font-size:22px">⚡</div>
+            <div>
+              <div style="font-size:15px;font-weight:700">Électricité immeuble R+3 — Cotonou</div>
+              <div style="font-size:12px;color:var(--gray-400);font-family:var(--font-body);margin-top:2px">Client : Fatou Kouyaté · Artisan : Emmanuel Kpata</div>
+            </div>
+          </div>
+          <span class="badge badge-teal">● En cours</span>
+        </div>
+        <div style="margin-bottom:14px">
+          <div class="prog-row"><span>Avancement global</span><span style="color:var(--teal);font-weight:600">88%</span></div>
+          <div class="prog-bar"><div class="prog-fill pf-teal" style="width:88%"></div></div>
+        </div>
+        <div style="display:flex;gap:18px;flex-wrap:wrap">
+          <div style="font-size:12px;color:var(--gray-600);font-family:var(--font-body)">💰 <strong>3 500 000 FCFA</strong></div>
+          <div style="font-size:12px;color:var(--teal);font-family:var(--font-body)">🎯 Livraison dans <strong>5 jours</strong></div>
+          <div style="font-size:12px;color:var(--gray-600);font-family:var(--font-body)">📷 Dernier rapport : <strong>12 Mars</strong></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid var(--gray-100)">
+          <button class="btn btn-orange" style="font-size:12px;padding:7px 14px" onclick="event.stopPropagation();showPage('suivi-chantier')">Voir le suivi →</button>
+          <button class="btn btn-teal" style="font-size:12px;padding:7px 14px" onclick="event.stopPropagation()">✅ Valider livraison</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════ -->
+<!-- PAGE 2 : SUIVI DÉTAILLÉ            -->
+<!-- ════════════════════════════════════ -->
+<div class="page" id="page-suivi-chantier">
+  <div class="container">
+    <button class="btn btn-outline" style="margin-bottom:22px" onclick="showPage('dashboard')">← Mes chantiers</button>
+
+    <!-- Hero -->
+    <div class="mission-hero">
+      <div class="mh-top">
+        <div>
+          <div class="mh-title">Rénovation appartement F4 — Cotonou</div>
+          <div class="mh-sub">Artisan : Kofi Adetokunbo · Démarrage : 01 Mars 2026</div>
+        </div>
+        <div class="mh-badge">Jalon 3 / 4</div>
+      </div>
+      <div class="mh-stats">
+        <div class="mh-stat"><div class="mh-stat-val">65%</div><div class="mh-stat-label">Avancement</div></div>
+        <div class="mh-stat"><div class="mh-stat-val">47j</div><div class="mh-stat-label">Jours restants</div></div>
+        <div class="mh-stat"><div class="mh-stat-val">18</div><div class="mh-stat-label">Rapports reçus</div></div>
+        <div class="mh-stat"><div class="mh-stat-val">3.2M</div><div class="mh-stat-label">FCFA bloqués</div></div>
+      </div>
+      <div class="mh-progress">
+        <div class="mh-prog-label"><span>Progression totale</span><span>65% / 100%</span></div>
+        <div class="mh-prog-bar"><div class="mh-prog-fill" style="width:65%"></div></div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="setTab(this,'vue-ensemble')">📊 Vue ensemble</button>
+      <button class="tab" onclick="setTab(this,'rapports')">📷 Rapports photo</button>
+      <button class="tab" onclick="setTab(this,'jalons')">📅 Jalons</button>
+      <button class="tab" onclick="setTab(this,'equipe')">👷 Équipe</button>
+    </div>
+
+    <!-- VUE ENSEMBLE -->
+    <div id="tab-vue-ensemble">
+      <div class="two-col">
+        <div>
+          <div class="card">
+            <div class="card-title">📊 Avancement par zone</div>
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <div class="prog-wrap"><div class="prog-row"><span>🛋️ Salon / Séjour</span><span style="color:var(--teal);font-weight:600">100%</span></div><div class="prog-bar"><div class="prog-fill pf-teal" style="width:100%"></div></div></div>
+              <div class="prog-wrap"><div class="prog-row"><span>🛏️ Chambre principale</span><span style="color:var(--teal);font-weight:600">100%</span></div><div class="prog-bar"><div class="prog-fill pf-teal" style="width:100%"></div></div></div>
+              <div class="prog-wrap"><div class="prog-row"><span>🛏️ Chambre 2</span><span style="color:var(--orange);font-weight:600">75%</span></div><div class="prog-bar"><div class="prog-fill pf-orange" style="width:75%"></div></div></div>
+              <div class="prog-wrap"><div class="prog-row"><span>🛏️ Chambre 3</span><span style="color:var(--orange);font-weight:600">55%</span></div><div class="prog-bar"><div class="prog-fill pf-orange" style="width:55%"></div></div></div>
+              <div class="prog-wrap"><div class="prog-row"><span>🚿 Salle de bain 1</span><span style="color:var(--teal);font-weight:600">90%</span></div><div class="prog-bar"><div class="prog-fill pf-teal" style="width:90%"></div></div></div>
+              <div class="prog-wrap"><div class="prog-row"><span>🚿 Salle de bain 2</span><span style="color:var(--amber);font-weight:600">30%</span></div><div class="prog-bar"><div class="prog-fill pf-amber" style="width:30%"></div></div></div>
+              <div class="prog-wrap"><div class="prog-row"><span>🍳 Cuisine</span><span style="color:var(--orange);font-weight:600">60%</span></div><div class="prog-bar"><div class="prog-fill pf-orange" style="width:60%"></div></div></div>
+              <div class="prog-wrap" style="margin-bottom:0"><div class="prog-row"><span>🚪 Finitions générales</span><span style="color:var(--gray-400);font-weight:600">10%</span></div><div class="prog-bar"><div class="prog-fill" style="width:10%;background:var(--gray-400)"></div></div></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">📷 Derniers rapports photo</div>
+            <div style="display:flex;flex-direction:column;gap:12px">
+
+              <div class="rapport-card latest">
+                <div class="rc-top">
+                  <div class="rc-date">📅 Aujourd'hui — 13 Mars 2026 <span class="badge badge-orange">Nouveau</span></div>
+                  <button class="btn btn-outline" style="font-size:11px;padding:5px 10px" onclick="showPage('detail-rapport')">Voir →</button>
+                </div>
+                <div class="rc-photos">
+                  <div class="rc-photo">🏠</div><div class="rc-photo">🧱</div>
+                  <div class="rc-photo">🪟</div><div class="rc-photo">🏗️<div class="rc-more">+4</div></div>
+                </div>
+                <div class="rc-note">"Pose du carrelage dans le salon terminée. La chambre 2 est en cours de peinture. Aucun problème à signaler."</div>
+                <div class="rc-stats">
+                  <div class="rc-stat">📷 <strong>7 photos</strong></div>
+                  <div class="rc-stat">📍 <strong>GPS vérifié</strong></div>
+                  <div class="rc-stat">⏱️ <strong>09h32</strong></div>
+                </div>
+              </div>
+
+              <div class="rapport-card">
+                <div class="rc-top">
+                  <div class="rc-date">📅 Hier — 12 Mars 2026</div>
+                  <button class="btn btn-outline" style="font-size:11px;padding:5px 10px">Voir →</button>
+                </div>
+                <div class="rc-photos">
+                  <div class="rc-photo">🚿</div><div class="rc-photo">🔧</div>
+                  <div class="rc-photo">🏗️</div><div class="rc-photo">🧱<div class="rc-more">+2</div></div>
+                </div>
+                <div class="rc-note">"Plomberie de la salle de bain 1 quasi-terminée. On commence les carreaux demain."</div>
+                <div class="rc-stats">
+                  <div class="rc-stat">📷 <strong>5 photos</strong></div>
+                  <div class="rc-stat">📍 <strong>GPS vérifié</strong></div>
+                  <div class="rc-stat">⏱️ <strong>11h15</strong></div>
+                </div>
+              </div>
+
+            </div>
+            <button class="btn btn-outline btn-full" style="margin-top:4px" onclick="setTabDirect('rapports')">Voir tous les rapports →</button>
+          </div>
+        </div>
+
+        <!-- Sidebar droite -->
+        <div class="sticky-box">
+          <div class="card" style="margin-bottom:0">
+            <div class="card-title">📍 Localisation du chantier</div>
+            <div class="map-box">
+              <div class="map-marker">📍</div>
+              <div class="map-label">Haie Vive, Cotonou</div>
+              <div class="map-sub">Bénin · GPS : 6.3703° N, 2.4100° E</div>
+            </div>
+            <div style="font-size:12px;color:var(--teal);background:var(--teal-light);padding:8px 12px;border-radius:var(--radius-sm);font-family:var(--font-body)">✅ Position GPS vérifiée à chaque rapport</div>
+          </div>
+
+          <div class="card" style="margin-bottom:0">
+            <div class="card-title">👷 Artisan</div>
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+              <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--orange),var(--orange-dark));display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:white">KA</div>
+              <div>
+                <div style="font-size:14px;font-weight:600">Kofi Adetokunbo</div>
+                <div style="font-size:11px;color:var(--gray-400);font-family:var(--font-body)">Maçon senior · 12 ans</div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:0">
+              <div class="info-item"><span class="info-label">Note BatiConnect</span><span style="color:var(--amber);font-weight:600">★ 4.9 / 5</span></div>
+              <div class="info-item"><span class="info-label">Missions terminées</span><span class="info-val">47</span></div>
+              <div class="info-item"><span class="info-label">Rapports envoyés</span><span class="info-val">18 / 18 ✅</span></div>
+              <div class="info-item"><span class="info-label">Statut</span><span class="badge badge-teal">En chantier</span></div>
+            </div>
+            <button class="btn btn-outline btn-full" style="margin-top:12px;font-size:12px">💬 Envoyer un message</button>
+          </div>
+
+          <div class="card" style="margin-bottom:0">
+            <div class="card-title">⚠️ Alertes</div>
+            <div class="alert alert-success" style="margin-bottom:10px">
+              <span>✅</span><div>Tous les rapports photo sont à jour. Aucun retard constaté.</div>
+            </div>
+            <div class="alert alert-info" style="margin-bottom:0">
+              <span>📅</span><div>Prochain jalon dans <strong>8 jours</strong> — prévoir validation du jalon 3.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RAPPORTS PHOTO -->
+    <div id="tab-rapports" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+        <div style="font-size:14px;font-weight:600">18 rapports envoyés sur cette mission</div>
+        <button class="btn btn-orange" onclick="openRapport()">📷 Ajouter un rapport</button>
+      </div>
+      <div class="rapport-grid">
+        <div class="rapport-card latest" onclick="showPage('detail-rapport')">
+          <div class="rc-top"><div class="rc-date">📅 13 Mars 2026 · 09h32 <span class="badge badge-orange">Nouveau</span></div><button class="btn btn-outline" style="font-size:11px;padding:5px 10px">Voir →</button></div>
+          <div class="rc-photos"><div class="rc-photo">🏠</div><div class="rc-photo">🧱</div><div class="rc-photo">🪟</div><div class="rc-photo">🏗️<div class="rc-more">+4</div></div></div>
+          <div class="rc-note">"Pose du carrelage salon terminée. Chambre 2 en peinture."</div>
+          <div class="rc-stats"><div class="rc-stat">📷 <strong>7 photos</strong></div><div class="rc-stat">📹 <strong>1 vidéo</strong></div><div class="rc-stat">📍 <strong>GPS ✓</strong></div></div>
+        </div>
+        <div class="rapport-card" onclick="showPage('detail-rapport')">
+          <div class="rc-top"><div class="rc-date">📅 12 Mars 2026 · 11h15</div><button class="btn btn-outline" style="font-size:11px;padding:5px 10px">Voir →</button></div>
+          <div class="rc-photos"><div class="rc-photo">🚿</div><div class="rc-photo">🔧</div><div class="rc-photo">🏗️</div><div class="rc-photo">🧱<div class="rc-more">+2</div></div></div>
+          <div class="rc-note">"Plomberie salle de bain 1 quasi-terminée."</div>
+          <div class="rc-stats"><div class="rc-stat">📷 <strong>5 photos</strong></div><div class="rc-stat">📍 <strong>GPS ✓</strong></div></div>
+        </div>
+        <div class="rapport-card" onclick="showPage('detail-rapport')">
+          <div class="rc-top"><div class="rc-date">📅 10 Mars 2026 · 08h45</div><button class="btn btn-outline" style="font-size:11px;padding:5px 10px">Voir →</button></div>
+          <div class="rc-photos"><div class="rc-photo">🏠</div><div class="rc-photo">🪟</div><div class="rc-photo">🚪</div><div class="rc-photo">🧱</div></div>
+          <div class="rc-note">"Menuiserie des fenêtres installée. Pose de l'enduit en cours."</div>
+          <div class="rc-stats"><div class="rc-stat">📷 <strong>4 photos</strong></div><div class="rc-stat">📍 <strong>GPS ✓</strong></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- JALONS -->
+    <div id="tab-jalons" style="display:none">
+      <div class="card">
+        <div class="card-title">📅 Planning par jalons</div>
+        <div class="timeline">
+          <div class="tl-item done">
+            <div class="tl-dot done">✓</div>
+            <div class="tl-body">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+                <div class="tl-title">Jalon 1 — Préparation & fondations</div>
+                <span class="badge badge-teal">✓ Validé</span>
+              </div>
+              <div class="tl-desc">Travaux de gros œuvre, fondations, dallage</div>
+              <div class="tl-photos">
+                <div class="tl-photo">🏗️</div><div class="tl-photo">🧱</div><div class="tl-photo">🔨</div>
+              </div>
+              <div class="tl-meta">Terminé le 05 Mars 2026 · Payé : 320 000 FCFA</div>
+            </div>
+          </div>
+          <div class="tl-item done">
+            <div class="tl-dot done">✓</div>
+            <div class="tl-body">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+                <div class="tl-title">Jalon 2 — Maçonnerie & cloisons</div>
+                <span class="badge badge-teal">✓ Validé</span>
+              </div>
+              <div class="tl-desc">Élévation des murs, pose des cloisons intérieures</div>
+              <div class="tl-photos">
+                <div class="tl-photo">🏠</div><div class="tl-photo">🧱</div><div class="tl-photo">🪟</div>
+              </div>
+              <div class="tl-meta">Terminé le 10 Mars 2026 · Payé : 960 000 FCFA</div>
+            </div>
+          </div>
+          <div class="tl-item active">
+            <div class="tl-dot active">3</div>
+            <div class="tl-body">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+                <div class="tl-title">Jalon 3 — Revêtements & installations</div>
+                <span class="badge badge-orange">● En cours 65%</span>
+              </div>
+              <div class="tl-desc">Carrelage, peinture, plomberie, électricité</div>
+              <div style="margin:8px 0">
+                <div class="prog-row"><span>Progression</span><span style="color:var(--orange);font-weight:600">65%</span></div>
+                <div class="prog-bar"><div class="prog-fill pf-orange" style="width:65%"></div></div>
+              </div>
+              <div class="tl-meta">En cours depuis le 11 Mars · Deadline : 21 Mars 2026 · À libérer : 960 000 FCFA</div>
+            </div>
+          </div>
+          <div class="tl-item pending">
+            <div class="tl-dot pending">4</div>
+            <div class="tl-body">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+                <div class="tl-title">Jalon 4 — Finitions & livraison</div>
+                <span class="badge badge-gray">⏸ En attente</span>
+              </div>
+              <div class="tl-desc">Peinture finale, nettoyage, inspection complète et réception</div>
+              <div class="tl-meta">Prévu : 25 Avril 2026 · À libérer : 960 000 FCFA</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ÉQUIPE -->
+    <div id="tab-equipe" style="display:none">
+      <div class="card">
+        <div class="card-title">👷 Équipe sur le chantier</div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;align-items:center;gap:14px;padding:14px;background:var(--gray-50);border-radius:var(--radius-md)">
+            <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--orange),var(--orange-dark));display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:white">KA</div>
+            <div style="flex:1">
+              <div style="font-size:14px;font-weight:600">Kofi Adetokunbo</div>
+              <div style="font-size:12px;color:var(--gray-400);font-family:var(--font-body)">Chef de chantier · Maçon principal</div>
+            </div>
+            <span class="badge badge-teal">Chef</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;padding:14px;background:var(--gray-50);border-radius:var(--radius-md)">
+            <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--teal-dark));display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:white">OD</div>
+            <div style="flex:1">
+              <div style="font-size:14px;font-weight:600">Omar Dembélé</div>
+              <div style="font-size:12px;color:var(--gray-400);font-family:var(--font-body)">Carreleur · Sous-traitant</div>
+            </div>
+            <span class="badge badge-orange">Actif</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;padding:14px;background:var(--gray-50);border-radius:var(--radius-md)">
+            <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--amber),#633806);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:white">BN</div>
+            <div style="flex:1">
+              <div style="font-size:14px;font-weight:600">Bassirou Ndiaye</div>
+              <div style="font-size:12px;color:var(--gray-400);font-family:var(--font-body)">Plombier · Sous-traitant</div>
+            </div>
+            <span class="badge badge-orange">Actif</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════ -->
+<!-- PAGE 3 : DÉTAIL RAPPORT           -->
+<!-- ════════════════════════════════════ -->
+<div class="page" id="page-detail-rapport">
+  <div class="container" style="max-width:720px">
+    <button class="btn btn-outline" style="margin-bottom:22px" onclick="showPage('suivi-chantier')">← Retour au suivi</button>
+    <div style="font-size:20px;font-weight:700;margin-bottom:4px">Rapport du 13 Mars 2026</div>
+    <div style="font-size:13px;color:var(--gray-400);font-family:var(--font-body);margin-bottom:24px;display:flex;gap:16px;flex-wrap:wrap">
+      <span>📷 Envoyé à 09h32</span>
+      <span>📍 GPS : Haie Vive, Cotonou ✅</span>
+      <span>👷 Kofi Adetokunbo</span>
+    </div>
+
+    <div class="alert alert-success"><span>✅</span><div>Rapport validé automatiquement — GPS vérifié, photos datées et authentifiées par BatiConnect.</div></div>
+
+    <div class="card">
+      <div class="card-title">📷 Photos du chantier (7)</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        <div style="aspect-ratio:1;background:var(--gray-100);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-size:36px;cursor:pointer">🏠</div>
+        <div style="aspect-ratio:1;background:var(--gray-100);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-size:36px;cursor:pointer">🧱</div>
+        <div style="aspect-ratio:1;background:var(--gray-100);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-size:36px;cursor:pointer">🪟</div>
+        <div style="aspect-ratio:1;background:var(--gray-100);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-size:36px;cursor:pointer">🏗️</div>
+        <div style="aspect-ratio:1;background:var(--gray-100);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-size:36px;cursor:pointer">🚪</div>
+        <div style="aspect-ratio:1;background:var(--gray-100);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-size:36px;cursor:pointer">🎨</div>
+        <div style="aspect-ratio:1;background:var(--gray-100);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-size:36px;cursor:pointer">🔨</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📝 Note de l'artisan</div>
+      <div style="font-size:14px;color:var(--gray-600);font-family:var(--font-body);line-height:1.8;background:var(--gray-50);padding:16px;border-radius:var(--radius-md)">
+        "Bonjour Marc, voici le rapport du jour. La pose du carrelage dans le salon est entièrement terminée — le résultat est très propre. Nous avons commencé la peinture dans la chambre 2 ce matin avec l'enduit de base. Aucun problème à signaler. L'approvisionnement en peinture finale se fera jeudi prochain."
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📊 Avancement déclaré</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="prog-wrap"><div class="prog-row"><span>Salon / Séjour</span><span style="color:var(--teal);font-weight:600">100%</span></div><div class="prog-bar"><div class="prog-fill pf-teal" style="width:100%"></div></div></div>
+        <div class="prog-wrap"><div class="prog-row"><span>Chambre 2</span><span style="color:var(--orange);font-weight:600">75%</span></div><div class="prog-bar"><div class="prog-fill pf-orange" style="width:75%"></div></div></div>
+        <div class="prog-wrap" style="margin-bottom:0"><div class="prog-row"><span>Avancement global du projet</span><span style="color:var(--orange);font-weight:600">65%</span></div><div class="prog-bar"><div class="prog-fill pf-orange" style="width:65%"></div></div></div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:12px">
+      <button class="btn btn-teal" style="flex:1;justify-content:center">✅ Valider ce rapport</button>
+      <button class="btn btn-outline" style="flex:1;justify-content:center">💬 Répondre à l'artisan</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ENVOI RAPPORT -->
+<div class="modal-overlay" id="modal-rapport">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">📷 Envoyer un rapport de chantier</div>
+      <button class="modal-close" onclick="closeRapport()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="alert alert-info" style="margin-bottom:18px">
+        <span>📍</span>
+        <div>Votre position GPS sera enregistrée automatiquement pour certifier votre présence sur le chantier.</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mission concernée</label>
+        <select class="form-select">
+          <option>Rénovation appartement F4 — Cotonou</option>
+          <option>Villa 4 chambres — Abomey-Calavi</option>
+          <option>Électricité immeuble — Cotonou</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Photos du chantier <span style="color:var(--orange)">*</span></label>
+        <div class="upload-zone">
+          <div class="upload-icon">📷</div>
+          <div class="upload-text">Glissez vos photos ou <strong>parcourez</strong></div>
+          <div class="upload-hint">Min. 3 photos · JPG, PNG · Vidéos acceptées · Max 50 Mo</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Note / Commentaire <span style="color:var(--orange)">*</span></label>
+        <textarea class="form-textarea" placeholder="Décrivez l'avancement du jour, les travaux réalisés, les matériaux utilisés, les difficultés éventuelles..."></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">Avancement global (%)</label>
+          <input class="form-input" type="number" placeholder="Ex: 70" min="0" max="100" value="65">
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">Prochaine étape prévue</label>
+          <input class="form-input" type="text" placeholder="Ex: Peinture chambre 3">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeRapport()">Annuler</button>
+      <button class="btn btn-orange" onclick="closeRapport();showPage('suivi-chantier')">📤 Envoyer le rapport</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const p = document.getElementById('page-' + id);
+    if (p) { p.classList.add('active'); window.scrollTo({top:0,behavior:'smooth'}); }
+  }
+
+  function setTab(btn, tabId) {
+    btn.closest('.tabs').querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    ['vue-ensemble','rapports','jalons','equipe'].forEach(id => {
+      const el = document.getElementById('tab-' + id);
+      if (el) el.style.display = id === tabId ? 'block' : 'none';
+    });
+  }
+
+  function setTabDirect(tabId) {
+    const tabs = document.querySelectorAll('.tab');
+    const map = {'vue-ensemble':0,'rapports':1,'jalons':2,'equipe':3};
+    tabs.forEach(t => t.classList.remove('active'));
+    if (tabs[map[tabId]]) tabs[map[tabId]].classList.add('active');
+    ['vue-ensemble','rapports','jalons','equipe'].forEach(id => {
+      const el = document.getElementById('tab-' + id);
+      if (el) el.style.display = id === tabId ? 'block' : 'none';
+    });
+  }
+
+  function openRapport() { document.getElementById('modal-rapport').classList.add('open'); }
+  function closeRapport() { document.getElementById('modal-rapport').classList.remove('open'); }
+</script>
+</body>
+</html>

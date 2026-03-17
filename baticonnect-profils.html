@@ -1,0 +1,1371 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BatiConnect — Profils</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const db = supabase.createClient("https://qlpsantpdtarnrqnjmik.supabase.co", "sb_publishable_7TrwU7Q2o69F1R6xKy3-Qg_jvCgSElW");
+  function toast(msg, type) {
+    var colors = {success:"#1D9E75", error:"#A32D2D", info:"#D85A30"};
+    var icons  = {success:"&#x2705;", error:"&#x274C;", info:"&#x1F4A1;"};
+    type = type || "success";
+    var el = document.createElement("div");
+    el.style.cssText = "position:fixed;bottom:24px;right:24px;z-index:9999;background:#fff;border-left:4px solid " + (colors[type]||"#1D9E75") + ";padding:14px 18px;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.15);font-family:Sora,sans-serif;font-size:13px;display:flex;align-items:center;gap:10px;max-width:340px";
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(function(){ el.remove(); }, 3500);
+  }
+  async function getUser() {
+    var r = await db.auth.getUser();
+    return r.data.user;
+  }
+  function fmtFCFA(n) {
+    return new Intl.NumberFormat("fr-FR").format(n) + " FCFA";
+  }
+</script>
+<style>@keyframes toastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}</style>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=DM+Sans:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --orange: #D85A30;
+    --orange-light: #FAECE7;
+    --orange-dark: #993C1D;
+    --orange-mid: #F0997B;
+    --teal: #1D9E75;
+    --teal-light: #E1F5EE;
+    --teal-dark: #085041;
+    --amber: #BA7517;
+    --amber-light: #FAEEDA;
+    --red-light: #FCEBEB;
+    --red: #A32D2D;
+    --gray-50: #F9F8F5;
+    --gray-100: #F1EFE8;
+    --gray-200: #D3D1C7;
+    --gray-400: #888780;
+    --gray-600: #5F5E5A;
+    --gray-900: #2C2C2A;
+    --white: #FFFFFF;
+    --font: 'Sora', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.07);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--gray-50);
+    color: var(--gray-900);
+    min-height: 100vh;
+  }
+
+  /* ── NAVBAR ── */
+  .navbar {
+    background: var(--white);
+    border-bottom: 1px solid var(--gray-100);
+    padding: 0 24px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: var(--shadow-sm);
+  }
+  .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+  .logo-icon {
+    width: 38px; height: 38px;
+    background: var(--orange);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .logo-icon svg { width: 20px; height: 20px; fill: white; }
+  .logo-text { font-size: 18px; font-weight: 700; color: var(--gray-900); }
+  .logo-text span { color: var(--orange); }
+  .nav-right { display: flex; align-items: center; gap: 12px; }
+  .nav-btn {
+    padding: 8px 18px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    font-family: var(--font);
+    transition: all 0.2s;
+  }
+  .nav-btn-outline {
+    background: transparent;
+    border: 1.5px solid var(--gray-200);
+    color: var(--gray-600);
+  }
+  .nav-btn-outline:hover { border-color: var(--orange); color: var(--orange); }
+  .nav-btn-primary { background: var(--orange); color: white; }
+  .nav-btn-primary:hover { background: var(--orange-dark); }
+
+  /* ── PAGES ── */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── HERO CHOIX ── */
+  .choose-hero {
+    max-width: 860px;
+    margin: 60px auto;
+    padding: 0 24px;
+    text-align: center;
+  }
+  .choose-hero h1 {
+    font-size: 36px;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 14px;
+    color: var(--gray-900);
+  }
+  .choose-hero h1 span { color: var(--orange); }
+  .choose-hero p {
+    font-size: 15px;
+    color: var(--gray-600);
+    font-family: var(--font-body);
+    line-height: 1.7;
+    margin-bottom: 48px;
+  }
+  .choose-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    max-width: 680px;
+    margin: 0 auto;
+  }
+  .choose-card {
+    background: var(--white);
+    border: 2px solid var(--gray-100);
+    border-radius: var(--radius-xl);
+    padding: 36px 28px;
+    cursor: pointer;
+    transition: all 0.25s;
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+  }
+  .choose-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: var(--orange);
+    transform: scaleX(0);
+    transition: transform 0.25s;
+  }
+  .choose-card:hover { border-color: var(--orange); box-shadow: var(--shadow-lg); transform: translateY(-4px); }
+  .choose-card:hover::before { transform: scaleX(1); }
+  .choose-card.teal-variant::before { background: var(--teal); }
+  .choose-card.teal-variant:hover { border-color: var(--teal); }
+  .card-emoji { font-size: 40px; margin-bottom: 16px; display: block; }
+  .card-title { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+  .card-desc { font-size: 13px; color: var(--gray-600); font-family: var(--font-body); line-height: 1.6; margin-bottom: 20px; }
+  .card-features { list-style: none; }
+  .card-features li {
+    font-size: 12px;
+    color: var(--gray-600);
+    font-family: var(--font-body);
+    padding: 4px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-features li::before { content: '✓'; color: var(--orange); font-weight: 700; font-size: 12px; }
+  .teal-variant .card-features li::before { color: var(--teal); }
+  .card-action {
+    margin-top: 24px;
+    width: 100%;
+    padding: 12px;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    font-family: var(--font);
+    transition: all 0.2s;
+  }
+  .card-action-orange { background: var(--orange); color: white; }
+  .card-action-orange:hover { background: var(--orange-dark); }
+  .card-action-teal { background: var(--teal); color: white; }
+  .card-action-teal:hover { background: var(--teal-dark); }
+
+  /* ── FORMULAIRE ── */
+  .form-page {
+    max-width: 680px;
+    margin: 40px auto;
+    padding: 0 24px 60px;
+  }
+  .form-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--gray-400);
+    cursor: pointer;
+    margin-bottom: 28px;
+    border: none;
+    background: none;
+    font-family: var(--font);
+    transition: color 0.2s;
+  }
+  .form-back:hover { color: var(--orange); }
+  .form-header { margin-bottom: 32px; }
+  .form-type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+  .badge-orange { background: var(--orange-light); color: var(--orange-dark); }
+  .badge-teal { background: var(--teal-light); color: var(--teal-dark); }
+  .form-title { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
+  .form-subtitle { font-size: 14px; color: var(--gray-600); font-family: var(--font-body); line-height: 1.6; }
+
+  .form-card {
+    background: var(--white);
+    border: 1px solid var(--gray-100);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow-sm);
+  }
+  .form-section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gray-400);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 20px;
+  }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-row.one { grid-template-columns: 1fr; }
+  .form-group { margin-bottom: 18px; }
+  .form-group:last-child { margin-bottom: 0; }
+  .form-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--gray-900);
+    margin-bottom: 8px;
+  }
+  .label-required { color: var(--orange); font-size: 12px; }
+  .form-input, .form-select, .form-textarea {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-family: var(--font-body);
+    color: var(--gray-900);
+    background: var(--white);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus {
+    border-color: var(--orange);
+    box-shadow: 0 0 0 3px rgba(216,90,48,0.1);
+  }
+  .form-textarea { resize: vertical; min-height: 100px; line-height: 1.6; }
+  .form-select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888780' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+
+  /* Upload zone */
+  .upload-zone {
+    border: 2px dashed var(--gray-200);
+    border-radius: var(--radius-md);
+    padding: 28px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .upload-zone:hover { border-color: var(--orange); background: var(--orange-light); }
+  .upload-icon { font-size: 28px; margin-bottom: 8px; }
+  .upload-text { font-size: 13px; color: var(--gray-600); font-family: var(--font-body); }
+  .upload-text strong { color: var(--orange); }
+  .upload-hint { font-size: 11px; color: var(--gray-400); margin-top: 4px; }
+
+  /* Spécialités */
+  .spec-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+  .spec-btn {
+    padding: 7px 14px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    background: var(--white);
+    color: var(--gray-600);
+    transition: all 0.2s;
+    font-family: var(--font);
+  }
+  .spec-btn:hover, .spec-btn.selected {
+    background: var(--orange);
+    border-color: var(--orange);
+    color: white;
+  }
+  .spec-btn.selected-teal {
+    background: var(--teal);
+    border-color: var(--teal);
+    color: white;
+  }
+
+  /* Stars rating setup */
+  .level-select { display: flex; gap: 10px; margin-top: 4px; }
+  .level-btn {
+    flex: 1;
+    padding: 10px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--white);
+    font-family: var(--font);
+  }
+  .level-btn:hover { border-color: var(--orange); }
+  .level-btn.selected { border-color: var(--orange); background: var(--orange-light); }
+  .level-btn .level-icon { font-size: 18px; margin-bottom: 4px; }
+  .level-btn .level-name { font-size: 11px; font-weight: 600; color: var(--gray-900); }
+
+  /* Progress steps */
+  .steps {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 32px;
+  }
+  .step {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+  }
+  .step-num {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600;
+    flex-shrink: 0;
+    transition: all 0.3s;
+  }
+  .step-num.done { background: var(--teal); color: white; }
+  .step-num.active { background: var(--orange); color: white; }
+  .step-num.pending { background: var(--gray-100); color: var(--gray-400); }
+  .step-label { font-size: 11px; font-weight: 500; color: var(--gray-600); }
+  .step-line { flex: 1; height: 2px; background: var(--gray-200); margin: 0 8px; }
+  .step-line.done { background: var(--teal); }
+
+  /* Submit */
+  .submit-btn {
+    width: 100%;
+    padding: 15px;
+    border-radius: var(--radius-md);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    font-family: var(--font);
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .submit-orange { background: var(--orange); color: white; }
+  .submit-orange:hover { background: var(--orange-dark); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(216,90,48,0.3); }
+  .submit-teal { background: var(--teal); color: white; }
+  .submit-teal:hover { background: var(--teal-dark); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(29,158,117,0.3); }
+
+  .form-note {
+    text-align: center;
+    font-size: 12px;
+    color: var(--gray-400);
+    font-family: var(--font-body);
+    margin-top: 14px;
+    line-height: 1.6;
+  }
+  .form-note a { color: var(--orange); text-decoration: none; }
+
+  /* ── PROFIL AFFICHÉ ── */
+  .profile-page {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 0 24px 60px;
+  }
+  .profile-cover {
+    height: 180px;
+    background: linear-gradient(135deg, var(--orange-light) 0%, #FFE8DF 50%, var(--teal-light) 100%);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    position: relative;
+  }
+  .profile-cover-teal {
+    background: linear-gradient(135deg, var(--teal-light) 0%, #D0F5EA 50%, var(--amber-light) 100%);
+  }
+  .profile-main {
+    background: var(--white);
+    border: 1px solid var(--gray-100);
+    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+    padding: 0 28px 28px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow-sm);
+  }
+  .profile-avatar-wrap {
+    margin-top: -44px;
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+  .profile-avatar {
+    width: 88px; height: 88px;
+    border-radius: 50%;
+    border: 4px solid var(--white);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px; font-weight: 700;
+    color: white;
+    box-shadow: var(--shadow-md);
+    flex-shrink: 0;
+  }
+  .av-orange { background: linear-gradient(135deg, var(--orange), var(--orange-dark)); }
+  .av-teal { background: linear-gradient(135deg, var(--teal), var(--teal-dark)); }
+  .edit-btn {
+    padding: 9px 18px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    background: var(--white);
+    font-family: var(--font);
+    transition: all 0.2s;
+    color: var(--gray-600);
+  }
+  .edit-btn:hover { border-color: var(--orange); color: var(--orange); }
+  .profile-name { font-size: 22px; font-weight: 700; color: var(--gray-900); }
+  .profile-title { font-size: 14px; color: var(--gray-600); font-family: var(--font-body); margin-top: 3px; }
+  .profile-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 11px; font-weight: 600;
+  }
+  .badge-verified { background: var(--teal-light); color: var(--teal-dark); }
+  .badge-expert { background: var(--amber-light); color: #633806; }
+  .badge-top { background: var(--orange-light); color: var(--orange-dark); }
+  .badge-new { background: var(--gray-100); color: var(--gray-600); }
+  .profile-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--gray-100);
+  }
+  .profile-stat { text-align: center; }
+  .stat-value { font-size: 20px; font-weight: 700; color: var(--gray-900); }
+  .stat-label { font-size: 11px; color: var(--gray-400); font-family: var(--font-body); margin-top: 2px; }
+  .stars-display { color: var(--amber); font-size: 18px; letter-spacing: 1px; }
+
+  .info-card {
+    background: var(--white);
+    border: 1px solid var(--gray-100);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow-sm);
+  }
+  .info-card-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--gray-900);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .info-item {}
+  .info-label { font-size: 11px; color: var(--gray-400); font-family: var(--font-body); margin-bottom: 3px; }
+  .info-value { font-size: 13px; font-weight: 500; color: var(--gray-900); }
+  .spec-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+  .spec-tag {
+    padding: 6px 14px;
+    background: var(--orange-light);
+    color: var(--orange-dark);
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .spec-tag-teal {
+    background: var(--teal-light);
+    color: var(--teal-dark);
+  }
+
+  .portfolio-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .portfolio-item {
+    aspect-ratio: 1;
+    border-radius: var(--radius-md);
+    background: var(--gray-100);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px;
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+  .portfolio-item:hover { transform: scale(1.02); }
+  .portfolio-item .overlay {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity 0.2s;
+    color: white; font-size: 12px; font-weight: 500;
+  }
+  .portfolio-item:hover .overlay { opacity: 1; }
+
+  .review-item {
+    padding: 16px 0;
+    border-bottom: 1px solid var(--gray-100);
+  }
+  .review-item:last-child { border-bottom: none; }
+  .review-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; }
+  .reviewer-name { font-size: 13px; font-weight: 500; }
+  .reviewer-info { font-size: 11px; color: var(--gray-400); font-family: var(--font-body); margin-top: 2px; }
+  .review-stars { color: var(--amber); font-size: 13px; }
+  .review-text { font-size: 13px; color: var(--gray-600); font-family: var(--font-body); line-height: 1.6; }
+
+  .contact-btn {
+    width: 100%;
+    padding: 14px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    font-family: var(--font);
+    background: var(--orange);
+    color: white;
+    transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    margin-bottom: 10px;
+  }
+  .contact-btn:hover { background: var(--orange-dark); }
+  .contact-btn-outline {
+    background: var(--white);
+    border: 1.5px solid var(--gray-200);
+    color: var(--gray-600);
+  }
+  .contact-btn-outline:hover { border-color: var(--orange); color: var(--orange); }
+
+  /* ── SUCCESS ── */
+  .success-page {
+    max-width: 480px;
+    margin: 80px auto;
+    padding: 0 24px;
+    text-align: center;
+  }
+  .success-icon {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px;
+    margin: 0 auto 24px;
+  }
+  .success-title { font-size: 26px; font-weight: 700; margin-bottom: 12px; }
+  .success-text { font-size: 14px; color: var(--gray-600); font-family: var(--font-body); line-height: 1.7; margin-bottom: 32px; }
+  .success-actions { display: flex; flex-direction: column; gap: 10px; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 600px) {
+    .choose-cards { grid-template-columns: 1fr; }
+    .form-row { grid-template-columns: 1fr; }
+    .profile-stats { grid-template-columns: repeat(2, 1fr); }
+    .info-grid { grid-template-columns: 1fr; }
+    .portfolio-grid { grid-template-columns: repeat(2, 1fr); }
+    .navbar { padding: 0 16px; }
+    .choose-hero h1 { font-size: 26px; }
+    .level-select { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <a class="logo" href="#" onclick="showPage('choose'); return false;">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <span class="logo-text">Bati<span>Connect</span></span>
+  </a>
+  <div class="nav-right">
+    <button class="nav-btn nav-btn-outline" onclick="showPage('choose')">Accueil</button>
+    <button class="nav-btn nav-btn-primary" onclick="showPage('form-demandeur')">Créer un compte</button>
+  </div>
+</nav>
+
+<!-- ── PAGE : CHOIX ── -->
+<div class="page active" id="page-choose">
+  <div class="choose-hero">
+    <h1>Bienvenue sur <span>BatiConnect</span></h1>
+    <p>La première plateforme africaine sécurisée qui connecte les demandeurs de services aux artisans vérifiés. Choisissez votre profil pour commencer.</p>
+
+    <div class="choose-cards">
+      <div class="choose-card" onclick="showPage('form-demandeur')">
+        <span class="card-emoji">🏗️</span>
+        <div class="card-title">Je cherche un artisan</div>
+        <div class="card-desc">Vous avez un projet de construction, rénovation ou tout autre service ? Trouvez l'artisan idéal en toute sécurité.</div>
+        <ul class="card-features">
+          <li>Publiez votre demande gratuitement</li>
+          <li>Recevez des propositions vérifiées</li>
+          <li>Paiement sécurisé ESCROW</li>
+          <li>Suivi de chantier en temps réel</li>
+          <li>Protection contre les fraudes</li>
+        </ul>
+        <button class="card-action card-action-orange" onclick="showPage('form-demandeur'); event.stopPropagation();">Créer mon compte demandeur →</button>
+      </div>
+
+      <div class="choose-card teal-variant" onclick="showPage('form-prestataire')">
+        <span class="card-emoji">🔧</span>
+        <div class="card-title">Je suis artisan</div>
+        <div class="card-desc">Vous êtes maçon, électricien, plombier ou autre ? Rejoignez notre réseau de prestataires vérifiés et trouvez des missions.</div>
+        <ul class="card-features">
+          <li>Profil professionnel vérifié</li>
+          <li>Accès à des missions qualifiées</li>
+          <li>Paiement garanti et sécurisé</li>
+          <li>Badge Expert & Top Prestataire</li>
+          <li>Visibilité accrue avec les bonnes notes</li>
+        </ul>
+        <button class="card-action card-action-teal" onclick="showPage('form-prestataire'); event.stopPropagation();">Créer mon profil prestataire →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PAGE : FORMULAIRE DEMANDEUR ── -->
+<div class="page" id="page-form-demandeur">
+  <div class="form-page">
+    <button class="form-back" onclick="showPage('choose')">← Retour</button>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num active" id="step-d1">1</div>
+        <div class="step-label">Informations</div>
+      </div>
+      <div class="step-line" id="line-d1"></div>
+      <div class="step">
+        <div class="step-num pending" id="step-d2">2</div>
+        <div class="step-label">Projet</div>
+      </div>
+      <div class="step-line" id="line-d2"></div>
+      <div class="step">
+        <div class="step-num pending" id="step-d3">3</div>
+        <div class="step-label">Confirmation</div>
+      </div>
+    </div>
+
+    <div class="form-header">
+      <span class="form-type-badge badge-orange">🏗️ Compte Demandeur</span>
+      <div class="form-title">Créez votre profil</div>
+      <div class="form-subtitle">Remplissez vos informations pour accéder aux meilleurs artisans vérifiés de votre région.</div>
+    </div>
+
+    <!-- Étape 1 -->
+    <div id="demandeur-step1">
+      <div class="form-card">
+        <div class="form-section-title">Informations personnelles</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Prénom <span class="label-required">*</span></label>
+            <input class="form-input" type="text" placeholder="Votre prénom">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nom <span class="label-required">*</span></label>
+            <input class="form-input" type="text" placeholder="Votre nom">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Email <span class="label-required">*</span></label>
+            <input class="form-input" type="email" placeholder="votre@email.com">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Téléphone / WhatsApp <span class="label-required">*</span></label>
+            <input class="form-input" type="tel" placeholder="+229 XX XX XX XX">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Mot de passe <span class="label-required">*</span></label>
+            <input class="form-input" type="password" placeholder="Minimum 8 caractères">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Confirmer le mot de passe <span class="label-required">*</span></label>
+            <input class="form-input" type="password" placeholder="Répétez le mot de passe">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <div class="form-section-title">Localisation</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Pays <span class="label-required">*</span></label>
+            <select class="form-select">
+              <option value="">Sélectionnez votre pays</option>
+              <option value="BJ" selected>🇧🇯 Bénin</option>
+              <option value="CI">🇨🇮 Côte d'Ivoire</option>
+              <option value="SN">🇸🇳 Sénégal</option>
+              <option value="TG">🇹🇬 Togo</option>
+              <option value="NG">🇳🇬 Nigeria</option>
+              <option value="GH">🇬🇭 Ghana</option>
+              <option value="FR">🇫🇷 France (Diaspora)</option>
+              <option value="US">🇺🇸 États-Unis (Diaspora)</option>
+              <option value="CA">🇨🇦 Canada (Diaspora)</option>
+              <option value="other">Autre pays</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Ville <span class="label-required">*</span></label>
+            <input class="form-input" type="text" placeholder="Ex: Cotonou, Abomey-Calavi...">
+          </div>
+        </div>
+        <div class="form-row one">
+          <div class="form-group">
+            <label class="form-label">Localisation du projet (si différente)</label>
+            <input class="form-input" type="text" placeholder="Où se trouvent vos travaux ?">
+          </div>
+        </div>
+      </div>
+
+      <button class="submit-btn submit-orange" onclick="nextStep('demandeur', 2)">
+        Continuer vers l'étape 2 →
+      </button>
+    </div>
+
+    <!-- Étape 2 -->
+    <div id="demandeur-step2" style="display:none">
+      <div class="form-card">
+        <div class="form-section-title">Votre projet</div>
+        <div class="form-row one">
+          <div class="form-group">
+            <label class="form-label">Titre du projet <span class="label-required">*</span></label>
+            <input class="form-input" type="text" placeholder="Ex: Construction maison 3 chambres à Cotonou">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Type de travaux <span class="label-required">*</span></label>
+            <select class="form-select">
+              <option value="">Choisissez une catégorie</option>
+              <option>🏗️ Maçonnerie / Construction</option>
+              <option>⚡ Électricité</option>
+              <option>🔧 Plomberie</option>
+              <option>🪟 Menuiserie</option>
+              <option>🎨 Peinture</option>
+              <option>🏠 Carrelage</option>
+              <option>📐 Architecture</option>
+              <option>🌿 Jardinage</option>
+              <option>💻 Informatique</option>
+              <option>✂️ Couture / Confection</option>
+              <option>🚗 Mécanique</option>
+              <option>📷 Photographie</option>
+              <option>Autre service</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Budget estimé (FCFA)</label>
+            <input class="form-input" type="text" placeholder="Ex: 5 000 000">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Délai souhaité</label>
+            <input class="form-input" type="text" placeholder="Ex: 3 mois, 6 mois...">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Urgence</label>
+            <select class="form-select">
+              <option>Pas urgent — je prends le temps</option>
+              <option>Modéré — dans les 3 mois</option>
+              <option>Urgent — dans le mois</option>
+              <option>Très urgent — dès que possible</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row one">
+          <div class="form-group">
+            <label class="form-label">Description du projet</label>
+            <textarea class="form-textarea" placeholder="Décrivez votre projet en détail : superficie, matériaux souhaités, contraintes particulières..."></textarea>
+          </div>
+        </div>
+        <div class="form-row one">
+          <div class="form-group">
+            <label class="form-label">Photos ou plans (optionnel)</label>
+            <div class="upload-zone">
+              <div class="upload-icon">📎</div>
+              <div class="upload-text">Glissez vos fichiers ici ou <strong>parcourez</strong></div>
+              <div class="upload-hint">PNG, JPG, PDF · Max 10 Mo par fichier</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <div class="form-section-title">Photo de profil</div>
+        <div class="upload-zone">
+          <div class="upload-icon">🤳</div>
+          <div class="upload-text">Ajoutez votre photo de profil <strong>(recommandé)</strong></div>
+          <div class="upload-hint">Les profils avec photo reçoivent 3× plus de réponses</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px">
+        <button class="submit-btn submit-orange" style="flex:1;background:var(--gray-100);color:var(--gray-600);" onclick="nextStep('demandeur', 1)">← Retour</button>
+        <button class="submit-btn submit-orange" style="flex:2" onclick="nextStep('demandeur', 3)">Créer mon compte →</button>
+      </div>
+    </div>
+
+    <!-- Étape 3 : Success -->
+    <div id="demandeur-step3" style="display:none">
+      <div class="success-page" style="max-width:100%;margin:0">
+        <div class="success-icon" style="background:var(--orange-light)">🎉</div>
+        <div class="success-title">Compte créé avec succès !</div>
+        <div class="success-text">Votre profil demandeur est maintenant actif. Vous pouvez dès maintenant publier votre projet et recevoir des propositions d'artisans vérifiés.</div>
+        <div class="success-actions">
+          <button class="submit-btn submit-orange" onclick="showPage('profil-demandeur')">Voir mon profil →</button>
+          <button class="submit-btn" style="background:var(--orange-light);color:var(--orange-dark)" onclick="showPage('choose')">Retour à l'accueil</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-note" id="demandeur-note">
+      Déjà inscrit ? <a href="#">Connectez-vous</a> · En créant un compte vous acceptez nos <a href="#">Conditions d'utilisation</a>
+    </div>
+  </div>
+</div>
+
+<!-- ── PAGE : FORMULAIRE PRESTATAIRE ── -->
+<div class="page" id="page-form-prestataire">
+  <div class="form-page">
+    <button class="form-back" onclick="showPage('choose')">← Retour</button>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num active" id="step-p1">1</div>
+        <div class="step-label">Identité</div>
+      </div>
+      <div class="step-line" id="line-p1"></div>
+      <div class="step">
+        <div class="step-num pending" id="step-p2">2</div>
+        <div class="step-label">Compétences</div>
+      </div>
+      <div class="step-line" id="line-p2"></div>
+      <div class="step">
+        <div class="step-num pending" id="step-p3">3</div>
+        <div class="step-label">Vérification</div>
+      </div>
+    </div>
+
+    <div class="form-header">
+      <span class="form-type-badge badge-teal">🔧 Compte Prestataire</span>
+      <div class="form-title">Créez votre profil professionnel</div>
+      <div class="form-subtitle">Un profil complet et vérifié vous donnera accès à plus de missions et une meilleure visibilité.</div>
+    </div>
+
+    <!-- Étape 1 -->
+    <div id="prestataire-step1">
+      <div class="form-card">
+        <div class="form-section-title">Informations personnelles</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Prénom <span class="label-required">*</span></label>
+            <input class="form-input" type="text" placeholder="Votre prénom">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nom <span class="label-required">*</span></label>
+            <input class="form-input" type="text" placeholder="Votre nom">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Email <span class="label-required">*</span></label>
+            <input class="form-input" type="email" placeholder="votre@email.com">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Téléphone / WhatsApp <span class="label-required">*</span></label>
+            <input class="form-input" type="tel" placeholder="+229 XX XX XX XX">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Mot de passe <span class="label-required">*</span></label>
+            <input class="form-input" type="password" placeholder="Minimum 8 caractères">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Confirmer le mot de passe <span class="label-required">*</span></label>
+            <input class="form-input" type="password" placeholder="Répétez le mot de passe">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <div class="form-section-title">Localisation & zone d'intervention</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Pays <span class="label-required">*</span></label>
+            <select class="form-select">
+              <option value="BJ" selected>🇧🇯 Bénin</option>
+              <option value="CI">🇨🇮 Côte d'Ivoire</option>
+              <option value="SN">🇸🇳 Sénégal</option>
+              <option value="TG">🇹🇬 Togo</option>
+              <option value="NG">🇳🇬 Nigeria</option>
+              <option value="GH">🇬🇭 Ghana</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Ville principale <span class="label-required">*</span></label>
+            <input class="form-input" type="text" placeholder="Ex: Cotonou">
+          </div>
+        </div>
+        <div class="form-row one">
+          <div class="form-group">
+            <label class="form-label">Rayon d'intervention</label>
+            <select class="form-select">
+              <option>Ma ville uniquement</option>
+              <option>Dans un rayon de 30 km</option>
+              <option>Dans un rayon de 100 km</option>
+              <option selected>Dans tout le pays</option>
+              <option>Dans toute l'Afrique de l'Ouest</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <button class="submit-btn submit-teal" onclick="nextStep('prestataire', 2)">
+        Continuer vers les compétences →
+      </button>
+    </div>
+
+    <!-- Étape 2 -->
+    <div id="prestataire-step2" style="display:none">
+      <div class="form-card">
+        <div class="form-section-title">Spécialités (sélectionnez tout ce qui s'applique)</div>
+        <div class="spec-grid" id="spec-grid">
+          <button class="spec-btn" onclick="toggleSpec(this)">🏗️ Maçonnerie</button>
+          <button class="spec-btn" onclick="toggleSpec(this)">⚡ Électricité</button>
+          <button class="spec-btn" onclick="toggleSpec(this)">🔧 Plomberie</button>
+          <button class="spec-btn" onclick="toggleSpec(this)">🪟 Menuiserie</button>
+          <button class="spec-btn" onclick="toggleSpec(this)">🎨 Peinture</button>
+          <button class="spec-btn" onclick="toggleSpec(this)">🏠 Carrelage</button>
+          <button class="spec-btn" onclick="toggleSpec(this)">📐 Architecture</button>
+          <button class="spec-btn" onclick="toggleSpec(this)">🏗️ Charpente</button>
+          <button class="spec-btn" onclick="toggleSpec(this)">🌿 Jardinage</button>
+          <button class="spec-btn" onclick="toggleSpec(this)">❄️ Climatisation</button>
+          <button class="spec-btn" onclick="toggleSpec(this)">🚗 Mécanique</button>
+          <button class="spec-btn" onclick="toggleSpec(this)">💻 Informatique</button>
+          <button class="spec-btn" onclick="toggleSpec(this)">📷 Photographie</button>
+          <button class="spec-btn" onclick="toggleSpec(this)">✂️ Couture</button>
+          <button class="spec-btn" onclick="toggleSpec(this)">🍳 Cuisine / Traiteur</button>
+          <button class="spec-btn" onclick="toggleSpec(this)">💇 Coiffure</button>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <div class="form-section-title">Expérience & niveau</div>
+        <div class="form-group">
+          <label class="form-label">Années d'expérience <span class="label-required">*</span></label>
+          <select class="form-select">
+            <option>Moins de 1 an</option>
+            <option>1 à 3 ans</option>
+            <option>3 à 5 ans</option>
+            <option>5 à 10 ans</option>
+            <option selected>Plus de 10 ans</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Niveau professionnel</label>
+          <div class="level-select">
+            <div class="level-btn" onclick="selectLevel(this)">
+              <div class="level-icon">🌱</div>
+              <div class="level-name">Débutant</div>
+            </div>
+            <div class="level-btn" onclick="selectLevel(this)">
+              <div class="level-icon">⚡</div>
+              <div class="level-name">Confirmé</div>
+            </div>
+            <div class="level-btn selected" onclick="selectLevel(this)">
+              <div class="level-icon">🏆</div>
+              <div class="level-name">Expert</div>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Présentation professionnelle</label>
+          <textarea class="form-textarea" placeholder="Décrivez votre expérience, vos réalisations, vos spécialités et ce qui vous distingue des autres prestataires..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tarif journalier indicatif (FCFA)</label>
+          <input class="form-input" type="text" placeholder="Ex: 25 000 FCFA / jour">
+        </div>
+      </div>
+
+      <div class="form-card">
+        <div class="form-section-title">Portfolio (photos de vos réalisations)</div>
+        <div class="upload-zone">
+          <div class="upload-icon">🖼️</div>
+          <div class="upload-text">Ajoutez des photos de vos travaux <strong>(très recommandé)</strong></div>
+          <div class="upload-hint">Les prestataires avec portfolio reçoivent 5× plus de missions · Max 10 photos</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px">
+        <button class="submit-btn" style="flex:1;background:var(--gray-100);color:var(--gray-600);" onclick="nextStep('prestataire', 1)">← Retour</button>
+        <button class="submit-btn submit-teal" style="flex:2" onclick="nextStep('prestataire', 3)">Continuer →</button>
+      </div>
+    </div>
+
+    <!-- Étape 3 : Vérification -->
+    <div id="prestataire-step3" style="display:none">
+      <div class="form-card">
+        <div class="form-section-title">Vérification d'identité (obligatoire)</div>
+        <div style="background:var(--orange-light);border-radius:var(--radius-sm);padding:14px;margin-bottom:20px;font-size:13px;color:var(--orange-dark);font-family:var(--font-body);line-height:1.6;">
+          <strong>Pourquoi vérifier votre identité ?</strong> La vérification est obligatoire pour gagner le badge ✔ Vérifié et accéder aux missions. Vos documents sont traités de façon confidentielle par notre équipe.
+        </div>
+        <div class="form-group">
+          <label class="form-label">Pièce d'identité <span class="label-required">*</span></label>
+          <select class="form-select" style="margin-bottom:10px">
+            <option>Carte Nationale d'Identité</option>
+            <option>Passeport</option>
+            <option>Permis de conduire</option>
+          </select>
+          <div class="upload-zone">
+            <div class="upload-icon">🪪</div>
+            <div class="upload-text">Uploadez le recto et verso de votre pièce d'identité</div>
+            <div class="upload-hint">JPG, PNG · Bien visible et lisible</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Selfie avec votre pièce d'identité <span class="label-required">*</span></label>
+          <div class="upload-zone">
+            <div class="upload-icon">🤳</div>
+            <div class="upload-text">Prenez une photo de vous tenant votre pièce d'identité</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Certifications ou diplômes (optionnel)</label>
+          <div class="upload-zone">
+            <div class="upload-icon">📜</div>
+            <div class="upload-text">Diplômes, certifications, attestations de formation</div>
+            <div class="upload-hint">Renforcez la confiance et obtenez le badge ✔ Certifié</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px">
+        <button class="submit-btn" style="flex:1;background:var(--gray-100);color:var(--gray-600)" onclick="nextStep('prestataire', 2)">← Retour</button>
+        <button class="submit-btn submit-teal" style="flex:2" onclick="showPage('profil-prestataire')">Soumettre mon profil →</button>
+      </div>
+
+      <div class="form-note">Notre équipe vérifiera votre profil sous 24-48h. En attendant, vous pouvez déjà postuler aux missions.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PAGE : PROFIL DEMANDEUR ── -->
+<div class="page" id="page-profil-demandeur">
+  <div class="profile-page">
+    <button class="form-back" onclick="showPage('choose')">← Retour à l'accueil</button>
+    <div class="profile-cover"></div>
+    <div class="profile-main">
+      <div class="profile-avatar-wrap">
+        <div class="profile-avatar av-orange">JD</div>
+        <button class="edit-btn">✏️ Modifier le profil</button>
+      </div>
+      <div class="profile-name">Jean Dupont</div>
+      <div class="profile-title">Demandeur de services · Diaspora France 🇫🇷</div>
+      <div class="profile-badges">
+        <span class="badge badge-new">🆕 Nouveau membre</span>
+        <span class="badge badge-verified">✔ Email vérifié</span>
+      </div>
+      <div class="profile-stats">
+        <div class="profile-stat">
+          <div class="stat-value">1</div>
+          <div class="stat-label">Projet publié</div>
+        </div>
+        <div class="profile-stat">
+          <div class="stat-value">0</div>
+          <div class="stat-label">Missions terminées</div>
+        </div>
+        <div class="profile-stat">
+          <div class="stat-value">12M</div>
+          <div class="stat-label">FCFA budget total</div>
+        </div>
+        <div class="profile-stat">
+          <div class="stat-value">—</div>
+          <div class="stat-label">Note donnée</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-title">📋 Informations du projet</div>
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="info-label">Titre du projet</div>
+          <div class="info-value">Construction villa 4 chambres</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Type de travaux</div>
+          <div class="info-value">🏗️ Maçonnerie / Construction</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Localisation des travaux</div>
+          <div class="info-value">📍 Abomey-Calavi, Bénin</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Budget estimé</div>
+          <div class="info-value">12 000 000 FCFA</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Délai souhaité</div>
+          <div class="info-value">8 mois</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Statut de la demande</div>
+          <div class="info-value" style="color:var(--teal)">● Active — 12 candidats</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-title">🔒 Paiement sécurisé ESCROW</div>
+      <div style="font-size:13px;color:var(--gray-600);font-family:var(--font-body);line-height:1.7;margin-bottom:16px">Votre argent est protégé. Le montant ne sera libéré à l'artisan qu'une fois que vous aurez validé le travail effectué.</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <div style="flex:1;min-width:120px;background:var(--gray-50);border-radius:var(--radius-sm);padding:14px;text-align:center">
+          <div style="font-size:18px;font-weight:700;color:var(--orange)">0 FCFA</div>
+          <div style="font-size:11px;color:var(--gray-400);margin-top:3px">En attente de dépôt</div>
+        </div>
+        <div style="flex:1;min-width:120px;background:var(--teal-light);border-radius:var(--radius-sm);padding:14px;text-align:center">
+          <div style="font-size:18px;font-weight:700;color:var(--teal)">0 FCFA</div>
+          <div style="font-size:11px;color:var(--teal-dark);margin-top:3px">Bloqué en sécurité</div>
+        </div>
+        <div style="flex:1;min-width:120px;background:var(--orange-light);border-radius:var(--radius-sm);padding:14px;text-align:center">
+          <div style="font-size:18px;font-weight:700;color:var(--orange-dark)">0 FCFA</div>
+          <div style="font-size:11px;color:var(--orange-dark);margin-top:3px">Libéré</div>
+        </div>
+      </div>
+    </div>
+
+    <button class="contact-btn" onclick="showPage('choose')">
+      🔍 Voir les candidatures reçues (12)
+    </button>
+  </div>
+</div>
+
+<!-- ── PAGE : PROFIL PRESTATAIRE ── -->
+<div class="page" id="page-profil-prestataire">
+  <div class="profile-page">
+    <button class="form-back" onclick="showPage('choose')">← Retour à l'accueil</button>
+    <div class="profile-cover profile-cover-teal"></div>
+    <div class="profile-main">
+      <div class="profile-avatar-wrap">
+        <div class="profile-avatar av-teal">KA</div>
+        <button class="edit-btn">✏️ Modifier</button>
+      </div>
+      <div class="profile-name">Kofi Adetokunbo</div>
+      <div class="profile-title">Maçon senior · Chef de chantier · 12 ans d'expérience</div>
+      <div class="profile-badges">
+        <span class="badge badge-verified">✔ Vérifié</span>
+        <span class="badge badge-expert">🏆 Expert</span>
+        <span class="badge badge-top">⭐ Top Prestataire</span>
+      </div>
+      <div class="profile-stats">
+        <div class="profile-stat">
+          <div class="stars-display">★★★★★</div>
+          <div class="stat-label">Note · 4.9/5</div>
+        </div>
+        <div class="profile-stat">
+          <div class="stat-value">47</div>
+          <div class="stat-label">Missions réalisées</div>
+        </div>
+        <div class="profile-stat">
+          <div class="stat-value">98%</div>
+          <div class="stat-label">Taux de succès</div>
+        </div>
+        <div class="profile-stat">
+          <div class="stat-value">2h</div>
+          <div class="stat-label">Temps de réponse</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-title">👤 À propos</div>
+      <p style="font-size:13px;color:var(--gray-600);font-family:var(--font-body);line-height:1.7">
+        Maçon professionnel avec 12 ans d'expérience en construction résidentielle et commerciale au Bénin et en Côte d'Ivoire. Spécialisé dans les villas, immeubles et travaux de rénovation haut de gamme. Rigueur, qualité et respect des délais sont mes engagements.
+      </p>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-title">🔨 Spécialités</div>
+      <div class="spec-tags">
+        <span class="spec-tag spec-tag-teal">🏗️ Maçonnerie</span>
+        <span class="spec-tag spec-tag-teal">📐 Architecture</span>
+        <span class="spec-tag spec-tag-teal">🏠 Carrelage</span>
+        <span class="spec-tag spec-tag-teal">🏗️ Charpente</span>
+        <span class="spec-tag spec-tag-teal">🎨 Peinture</span>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-title">📋 Informations</div>
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="info-label">Localisation</div>
+          <div class="info-value">📍 Calavi, Bénin</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Zone d'intervention</div>
+          <div class="info-value">Tout le Bénin</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Expérience</div>
+          <div class="info-value">Plus de 10 ans</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Tarif indicatif</div>
+          <div class="info-value">30 000 FCFA / jour</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Statut</div>
+          <div class="info-value" style="color:var(--teal)">● Disponible</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Membre depuis</div>
+          <div class="info-value">Mars 2024</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-title">🖼️ Portfolio de réalisations</div>
+      <div class="portfolio-grid">
+        <div class="portfolio-item" style="background:#E8F4F0">🏠<div class="overlay">Villa Calavi 2024</div></div>
+        <div class="portfolio-item" style="background:#FDF0E8">🏗️<div class="overlay">Fondations 2023</div></div>
+        <div class="portfolio-item" style="background:#E8EDF4">🏢<div class="overlay">Immeuble R+2</div></div>
+        <div class="portfolio-item" style="background:#F4EEE8">🧱<div class="overlay">Rénovation 2024</div></div>
+        <div class="portfolio-item" style="background:#EEF4E8">🏡<div class="overlay">Villa Cotonou</div></div>
+        <div class="portfolio-item" style="background:var(--gray-100);border:2px dashed var(--gray-200)">
+          <div style="text-align:center;color:var(--gray-400);font-size:12px">+ Ajouter</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-title">⭐ Avis clients (47)</div>
+      <div class="review-item">
+        <div class="review-top">
+          <div>
+            <div class="reviewer-name">Aminata D.</div>
+            <div class="reviewer-info">Construction villa · Novembre 2024</div>
+          </div>
+          <div class="review-stars">★★★★★</div>
+        </div>
+        <div class="review-text">Travail exceptionnel, délais parfaitement respectés. Kofi est très professionnel et communique régulièrement sur l'avancement. Je le recommande vivement !</div>
+      </div>
+      <div class="review-item">
+        <div class="review-top">
+          <div>
+            <div class="reviewer-name">Marc T.</div>
+            <div class="reviewer-info">Rénovation appartement · Août 2024</div>
+          </div>
+          <div class="review-stars">★★★★★</div>
+        </div>
+        <div class="review-text">Suivi du chantier impeccable via l'application. J'étais en France et je pouvais tout voir en temps réel. Qualité de finition remarquable.</div>
+      </div>
+      <div class="review-item">
+        <div class="review-top">
+          <div>
+            <div class="reviewer-name">Fatou K.</div>
+            <div class="reviewer-info">Carrelage résidence · Juin 2024</div>
+          </div>
+          <div class="review-stars">★★★★☆</div>
+        </div>
+        <div class="review-text">Bon travail globalement, quelques jours de retard sur la fin mais la qualité est là. Très réactif aux messages.</div>
+      </div>
+    </div>
+
+    <button class="contact-btn">
+      💬 Contacter Kofi
+    </button>
+    <button class="contact-btn contact-btn-outline">
+      📋 Proposer une mission
+    </button>
+  </div>
+</div>
+
+<script>
+  function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const page = document.getElementById('page-' + id);
+    if (page) {
+      page.classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }
+
+  function nextStep(type, step) {
+    const steps = document.querySelectorAll(`[id^="step-${type[0]}"]`);
+    const lines = document.querySelectorAll(`[id^="line-${type[0]}"]`);
+    const panels = document.querySelectorAll(`[id^="${type}-step"]`);
+
+    panels.forEach((p, i) => {
+      p.style.display = (i + 1 === step) ? 'block' : 'none';
+    });
+
+    steps.forEach((s, i) => {
+      s.className = 'step-num ' + (i + 1 < step ? 'done' : i + 1 === step ? 'active' : 'pending');
+      if (i + 1 < step) s.textContent = '✓';
+      else s.textContent = i + 1;
+    });
+
+    lines.forEach((l, i) => {
+      l.className = 'step-line ' + (i + 1 < step ? 'done' : '');
+    });
+
+    const note = document.getElementById(type === 'demandeur' ? 'demandeur-note' : '');
+    if (note) note.style.display = step === 3 ? 'none' : 'block';
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function toggleSpec(btn) {
+    btn.classList.toggle('selected');
+  }
+
+  function selectLevel(btn) {
+    document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+  }
+</script>
+</body>
+</html>

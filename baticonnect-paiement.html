@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BatiConnect — Paiement Sécurisé</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const db = supabase.createClient("https://qlpsantpdtarnrqnjmik.supabase.co", "sb_publishable_7TrwU7Q2o69F1R6xKy3-Qg_jvCgSElW");
+  function toast(msg, type) {
+    var colors = {success:"#1D9E75", error:"#A32D2D", info:"#D85A30"};
+    var icons  = {success:"&#x2705;", error:"&#x274C;", info:"&#x1F4A1;"};
+    type = type || "success";
+    var el = document.createElement("div");
+    el.style.cssText = "position:fixed;bottom:24px;right:24px;z-index:9999;background:#fff;border-left:4px solid " + (colors[type]||"#1D9E75") + ";padding:14px 18px;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.15);font-family:Sora,sans-serif;font-size:13px;display:flex;align-items:center;gap:10px;max-width:340px";
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(function(){ el.remove(); }, 3500);
+  }
+  async function getUser() {
+    var r = await db.auth.getUser();
+    return r.data.user;
+  }
+  function fmtFCFA(n) {
+    return new Intl.NumberFormat("fr-FR").format(n) + " FCFA";
+  }
+</script>
+<style>@keyframes toastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}</style>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=DM+Sans:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --orange: #D85A30; --orange-light: #FAECE7; --orange-dark: #993C1D; --orange-mid: #F0997B;
+    --teal: #1D9E75; --teal-light: #E1F5EE; --teal-dark: #085041;
+    --amber: #BA7517; --amber-light: #FAEEDA;
+    --red: #A32D2D; --red-light: #FCEBEB;
+    --blue: #185FA5; --blue-light: #E6F1FB;
+    --gray-50: #F9F8F5; --gray-100: #F1EFE8; --gray-200: #D3D1C7;
+    --gray-400: #888780; --gray-600: #5F5E5A; --gray-900: #2C2C2A;
+    --white: #FFFFFF;
+    --font: 'Sora', sans-serif; --font-body: 'DM Sans', sans-serif;
+    --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px; --radius-xl: 24px;
+    --shadow-sm: 0 1px 4px rgba(0,0,0,0.06); --shadow-md: 0 4px 20px rgba(0,0,0,0.08);
+    --shadow-lg: 0 8px 40px rgba(0,0,0,0.13);
+  }
+  body { font-family: var(--font); background: var(--gray-50); color: var(--gray-900); min-height: 100vh; }
+
+  /* ── NAVBAR ── */
+  .navbar {
+    background: var(--white); border-bottom: 1px solid var(--gray-100);
+    padding: 0 28px; height: 62px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow-sm);
+  }
+  .logo { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+  .logo-icon { width: 36px; height: 36px; background: var(--orange); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+  .logo-icon svg { width: 19px; height: 19px; fill: white; }
+  .logo-text { font-size: 17px; font-weight: 700; color: var(--gray-900); }
+  .logo-text span { color: var(--orange); }
+  .nav-secure { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--teal-dark); background: var(--teal-light); padding: 6px 14px; border-radius: 20px; font-weight: 500; }
+
+  /* ── PAGES ── */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── LAYOUT ── */
+  .container { max-width: 980px; margin: 0 auto; padding: 32px 24px 60px; }
+  .page-title { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .page-sub { font-size: 14px; color: var(--gray-400); font-family: var(--font-body); margin-bottom: 28px; }
+
+  /* ── CARDS ── */
+  .card { background: var(--white); border: 1px solid var(--gray-100); border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--shadow-sm); margin-bottom: 16px; }
+  .card-title { font-size: 14px; font-weight: 600; color: var(--gray-900); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+
+  /* ── STATS ── */
+  .stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 24px; }
+  .stat-card { background: var(--white); border: 1px solid var(--gray-100); border-radius: var(--radius-lg); padding: 18px; box-shadow: var(--shadow-sm); }
+  .stat-num { font-size: 24px; font-weight: 700; margin-bottom: 3px; }
+  .stat-num.orange { color: var(--orange); }
+  .stat-num.teal { color: var(--teal); }
+  .stat-num.amber { color: var(--amber); }
+  .stat-label { font-size: 12px; color: var(--gray-400); font-family: var(--font-body); }
+  .stat-change { font-size: 11px; margin-top: 5px; color: var(--teal); }
+
+  /* ── EXPLICATION VISUELLE ── */
+  .flow-section { margin-bottom: 24px; }
+  .flow-title { font-size: 15px; font-weight: 600; margin-bottom: 18px; }
+  .flow-steps { display: flex; align-items: flex-start; gap: 0; }
+  .flow-step { flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; }
+  .flow-step:not(:last-child)::after { content:''; position:absolute; top:22px; left:60%; width:80%; height:2px; background:var(--gray-200); z-index:0; }
+  .flow-step.done:not(:last-child)::after { background: var(--teal); }
+  .flow-step.active:not(:last-child)::after { background: linear-gradient(90deg, var(--teal), var(--gray-200)); }
+  .flow-num { width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; z-index:1; margin-bottom:10px; border:3px solid var(--white); box-shadow:var(--shadow-sm); }
+  .flow-num.done { background:var(--teal); }
+  .flow-num.active { background:var(--orange); animation: pulse 2s infinite; }
+  .flow-num.pending { background:var(--gray-100); }
+  @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(216,90,48,0.3)} 50%{box-shadow:0 0 0 8px rgba(216,90,48,0)} }
+  .flow-label { font-size:12px; font-weight:600; color:var(--gray-900); margin-bottom:4px; }
+  .flow-desc { font-size:11px; color:var(--gray-400); font-family:var(--font-body); line-height:1.5; max-width:100px; }
+
+  /* ── BADGE ── */
+  .badge { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:20px; font-size:10px; font-weight:600; }
+  .badge-orange { background:var(--orange-light); color:var(--orange-dark); }
+  .badge-teal { background:var(--teal-light); color:var(--teal-dark); }
+  .badge-amber { background:var(--amber-light); color:#633806; }
+  .badge-red { background:var(--red-light); color:var(--red); }
+  .badge-blue { background:var(--blue-light); color:var(--blue); }
+  .badge-gray { background:var(--gray-100); color:var(--gray-600); }
+
+  /* ── ALERT ── */
+  .alert { padding:12px 16px; border-radius:var(--radius-sm); font-size:13px; font-family:var(--font-body); line-height:1.6; margin-bottom:16px; display:flex; gap:10px; align-items:flex-start; }
+  .alert-info { background:var(--orange-light); color:var(--orange-dark); }
+  .alert-success { background:var(--teal-light); color:var(--teal-dark); }
+  .alert-warning { background:var(--amber-light); color:#633806; }
+  .alert-error { background:var(--red-light); color:var(--red); }
+
+  /* ── TRANSACTIONS LIST ── */
+  .tx-item { display:flex; align-items:center; gap:14px; padding:14px 0; border-bottom:1px solid var(--gray-100); }
+  .tx-item:last-child { border-bottom:none; }
+  .tx-icon { width:42px; height:42px; border-radius:var(--radius-sm); display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+  .tx-icon.in { background:var(--teal-light); }
+  .tx-icon.out { background:var(--orange-light); }
+  .tx-icon.hold { background:var(--amber-light); }
+  .tx-icon.pen { background:var(--red-light); }
+  .tx-info { flex:1; }
+  .tx-name { font-size:13px; font-weight:500; color:var(--gray-900); }
+  .tx-meta { font-size:11px; color:var(--gray-400); font-family:var(--font-body); margin-top:2px; }
+  .tx-amount { text-align:right; }
+  .tx-val { font-size:14px; font-weight:700; }
+  .tx-val.positive { color:var(--teal); }
+  .tx-val.negative { color:var(--orange); }
+  .tx-val.hold { color:var(--amber); }
+  .tx-val.penalty { color:var(--red); }
+  .tx-date { font-size:11px; color:var(--gray-400); font-family:var(--font-body); margin-top:2px; }
+
+  /* ── FORMS ── */
+  .form-group { margin-bottom:16px; }
+  .form-label { font-size:13px; font-weight:500; color:var(--gray-900); margin-bottom:7px; display:block; }
+  .form-input, .form-select { width:100%; padding:11px 14px; border:1.5px solid var(--gray-200); border-radius:var(--radius-sm); font-size:13px; font-family:var(--font-body); color:var(--gray-900); background:var(--white); outline:none; transition:border-color 0.2s, box-shadow 0.2s; }
+  .form-input:focus, .form-select:focus { border-color:var(--orange); box-shadow:0 0 0 3px rgba(216,90,48,0.09); }
+  .form-select { cursor:pointer; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%23888780' d='M5 7L0 2h10z'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; padding-right:32px; }
+  .form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .amount-wrap { position:relative; }
+  .amount-currency { position:absolute; right:14px; top:50%; transform:translateY(-50%); font-size:12px; color:var(--gray-400); pointer-events:none; font-weight:500; }
+
+  /* ── BOUTONS ── */
+  .btn { padding:11px 20px; border-radius:var(--radius-md); font-size:13px; font-weight:600; cursor:pointer; border:none; font-family:var(--font); transition:all 0.2s; display:inline-flex; align-items:center; gap:8px; }
+  .btn-primary { background:var(--orange); color:white; }
+  .btn-primary:hover { background:var(--orange-dark); transform:translateY(-1px); box-shadow:0 4px 12px rgba(216,90,48,0.3); }
+  .btn-teal { background:var(--teal); color:white; }
+  .btn-teal:hover { background:var(--teal-dark); transform:translateY(-1px); }
+  .btn-outline { background:var(--white); color:var(--gray-600); border:1.5px solid var(--gray-200); }
+  .btn-outline:hover { border-color:var(--orange); color:var(--orange); }
+  .btn-full { width:100%; justify-content:center; padding:13px; font-size:14px; }
+  .btn-red { background:var(--red-light); color:var(--red); }
+  .btn-red:hover { background:#F7C1C1; }
+
+  /* ── MÉTHODES PAIEMENT ── */
+  .payment-methods { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:20px; }
+  .pm-card { border:2px solid var(--gray-200); border-radius:var(--radius-md); padding:16px 12px; text-align:center; cursor:pointer; transition:all 0.2s; background:var(--white); }
+  .pm-card:hover { border-color:var(--orange); }
+  .pm-card.selected { border-color:var(--orange); background:var(--orange-light); }
+  .pm-logo { font-size:28px; margin-bottom:8px; }
+  .pm-name { font-size:12px; font-weight:600; color:var(--gray-900); }
+  .pm-detail { font-size:10px; color:var(--gray-400); margin-top:3px; font-family:var(--font-body); }
+
+  /* ── PROGRESS BAR ── */
+  .progress-wrap { margin-bottom:6px; }
+  .progress-label-row { display:flex; justify-content:space-between; font-size:12px; color:var(--gray-400); margin-bottom:6px; font-family:var(--font-body); }
+  .progress-bar { height:8px; background:var(--gray-100); border-radius:4px; overflow:hidden; }
+  .progress-fill { height:100%; border-radius:4px; transition:width 0.6s; }
+  .fill-orange { background:var(--orange); }
+  .fill-teal { background:var(--teal); }
+  .fill-amber { background:var(--amber); }
+  .fill-red { background:var(--red); }
+
+  /* ── JALONS ── */
+  .jalon-item { display:flex; gap:14px; padding:14px 0; border-bottom:1px solid var(--gray-100); align-items:flex-start; }
+  .jalon-item:last-child { border-bottom:none; }
+  .jalon-num { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; flex-shrink:0; }
+  .jalon-num.paid { background:var(--teal); color:white; }
+  .jalon-num.current { background:var(--orange); color:white; }
+  .jalon-num.pending { background:var(--gray-100); color:var(--gray-400); }
+  .jalon-info { flex:1; }
+  .jalon-title { font-size:13px; font-weight:500; color:var(--gray-900); margin-bottom:3px; }
+  .jalon-desc { font-size:12px; color:var(--gray-400); font-family:var(--font-body); }
+  .jalon-right { text-align:right; flex-shrink:0; }
+  .jalon-amount { font-size:14px; font-weight:700; color:var(--orange); }
+  .jalon-status { font-size:11px; margin-top:3px; }
+
+  /* ── PÉNALITÉS ── */
+  .penalty-item { display:flex; align-items:center; gap:14px; padding:14px 0; border-bottom:1px solid var(--gray-100); }
+  .penalty-item:last-child { border-bottom:none; }
+  .penalty-icon { width:36px; height:36px; border-radius:var(--radius-sm); background:var(--red-light); display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
+  .penalty-info { flex:1; }
+  .penalty-title { font-size:13px; font-weight:500; color:var(--gray-900); }
+  .penalty-meta { font-size:11px; color:var(--gray-400); font-family:var(--font-body); margin-top:2px; }
+  .penalty-amount { font-size:14px; font-weight:700; color:var(--red); }
+
+  /* ── MODAL ── */
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:200; display:none; align-items:center; justify-content:center; padding:24px; }
+  .modal-overlay.open { display:flex; }
+  .modal { background:var(--white); border-radius:var(--radius-xl); width:100%; max-width:520px; box-shadow:var(--shadow-lg); }
+  .modal-header { display:flex; align-items:center; justify-content:space-between; padding:20px 24px; border-bottom:1px solid var(--gray-100); }
+  .modal-title { font-size:16px; font-weight:700; }
+  .modal-close { width:30px; height:30px; border-radius:50%; border:none; background:var(--gray-100); cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center; }
+  .modal-close:hover { background:var(--gray-200); }
+  .modal-body { padding:24px; }
+  .modal-footer { padding:16px 24px; border-top:1px solid var(--gray-100); display:flex; gap:10px; justify-content:flex-end; }
+
+  /* ── TAB BAR ── */
+  .tab-bar { display:flex; background:var(--gray-100); border-radius:var(--radius-md); padding:4px; margin-bottom:24px; gap:4px; }
+  .tab { flex:1; padding:9px 12px; border-radius:10px; font-size:13px; font-weight:500; cursor:pointer; border:none; background:transparent; color:var(--gray-600); font-family:var(--font); transition:all 0.2s; text-align:center; }
+  .tab.active { background:var(--white); color:var(--orange); box-shadow:var(--shadow-sm); }
+
+  /* ── PORTEFEUILLE ── */
+  .wallet-card {
+    background:linear-gradient(135deg, #1a0f0a 0%, var(--orange-dark) 50%, #D87040 100%);
+    border-radius:var(--radius-xl); padding:28px; color:white; margin-bottom:20px; position:relative; overflow:hidden;
+  }
+  .wallet-card::before { content:''; position:absolute; top:-40px; right:-40px; width:160px; height:160px; border-radius:50%; background:rgba(255,255,255,0.06); }
+  .wallet-card::after { content:''; position:absolute; bottom:-30px; left:-30px; width:120px; height:120px; border-radius:50%; background:rgba(255,255,255,0.04); }
+  .wallet-label { font-size:12px; color:rgba(255,255,255,0.6); margin-bottom:6px; position:relative; z-index:1; }
+  .wallet-amount { font-size:38px; font-weight:700; position:relative; z-index:1; margin-bottom:4px; }
+  .wallet-sub { font-size:13px; color:rgba(255,255,255,0.7); position:relative; z-index:1; margin-bottom:24px; }
+  .wallet-actions { display:flex; gap:10px; position:relative; z-index:1; }
+  .wallet-btn { padding:10px 20px; border-radius:var(--radius-sm); font-size:13px; font-weight:600; cursor:pointer; border:none; font-family:var(--font); transition:all 0.2s; }
+  .wallet-btn-white { background:white; color:var(--orange-dark); }
+  .wallet-btn-white:hover { background:rgba(255,255,255,0.9); }
+  .wallet-btn-outline { background:rgba(255,255,255,0.15); color:white; border:1.5px solid rgba(255,255,255,0.3); }
+  .wallet-btn-outline:hover { background:rgba(255,255,255,0.25); }
+  .wallet-info-row { display:flex; gap:20px; margin-top:20px; position:relative; z-index:1; }
+  .wallet-info-item { flex:1; }
+  .wallet-info-label { font-size:11px; color:rgba(255,255,255,0.5); margin-bottom:3px; }
+  .wallet-info-value { font-size:16px; font-weight:600; color:rgba(255,255,255,0.9); }
+
+  /* ── SÉCURITÉ ── */
+  .security-row { display:flex; align-items:center; justify-content:center; gap:16px; padding:14px; background:var(--gray-50); border-radius:var(--radius-sm); margin-top:8px; flex-wrap:wrap; }
+  .security-item { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--gray-600); font-family:var(--font-body); }
+
+  /* Confirmation animation */
+  @keyframes checkmark { 0%{transform:scale(0)} 60%{transform:scale(1.2)} 100%{transform:scale(1)} }
+  .success-check { animation:checkmark 0.5s ease-out; }
+
+  @media (max-width:768px) {
+    .stats-grid { grid-template-columns:repeat(2,1fr); }
+    .payment-methods { grid-template-columns:repeat(2,1fr); }
+    .form-row { grid-template-columns:1fr; }
+    .flow-steps { flex-direction:column; gap:16px; }
+    .flow-step::after { display:none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="logo" onclick="showPage('tableau-bord')">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22" fill="none" stroke="white" stroke-width="1.5"/></svg>
+    </div>
+    <span class="logo-text">Bati<span>Connect</span></span>
+  </div>
+  <div class="nav-secure">🔒 Paiements 100% sécurisés</div>
+</nav>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- PAGE 1 : TABLEAU DE BORD PAIEMENT        -->
+<!-- ══════════════════════════════════════════ -->
+<div class="page active" id="page-tableau-bord">
+  <div class="container">
+    <div class="page-title">💰 Paiement Sécurisé</div>
+    <div class="page-sub">Votre argent est protégé jusqu'à la validation des travaux</div>
+
+    <!-- Portefeuille -->
+    <div class="wallet-card">
+      <div class="wallet-label">Solde disponible</div>
+      <div class="wallet-amount">845 000 <span style="font-size:20px;font-weight:400">FCFA</span></div>
+      <div class="wallet-sub">Compte BatiConnect · Kofi Adetokunbo</div>
+      <div class="wallet-actions">
+        <button class="wallet-btn wallet-btn-white" onclick="showPage('retrait')">💸 Retirer</button>
+        <button class="wallet-btn wallet-btn-outline" onclick="showPage('depot')">➕ Déposer</button>
+        <button class="wallet-btn wallet-btn-outline" onclick="showPage('historique')">📋 Historique</button>
+      </div>
+      <div class="wallet-info-row">
+        <div class="wallet-info-item">
+          <div class="wallet-info-label">En attente de validation</div>
+          <div class="wallet-info-value">3 200 000 FCFA</div>
+        </div>
+        <div class="wallet-info-item">
+          <div class="wallet-info-label">Total reçu ce mois</div>
+          <div class="wallet-info-value">1 450 000 FCFA</div>
+        </div>
+        <div class="wallet-info-item">
+          <div class="wallet-info-label">Commission BatiConnect</div>
+          <div class="wallet-info-value">116 000 FCFA</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-num teal">3 200 000</div>
+        <div class="stat-label">FCFA bloqués en sécurité</div>
+        <div class="stat-change">2 missions actives</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num orange">845 000</div>
+        <div class="stat-label">FCFA disponibles</div>
+        <div class="stat-change">Prêts à être retirés</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num amber">80 000</div>
+        <div class="stat-label">FCFA pénalités appliquées</div>
+        <div class="stat-change" style="color:var(--red)">Retard de délai</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" style="color:var(--gray-900)">8%</div>
+        <div class="stat-label">Commission BatiConnect</div>
+        <div class="stat-change">Sur chaque mission</div>
+      </div>
+    </div>
+
+    <!-- Comment ça marche -->
+    <div class="card">
+      <div class="card-title">🔒 Comment fonctionne le Paiement Sécurisé ?</div>
+      <div class="flow-steps">
+        <div class="flow-step done">
+          <div class="flow-num done">✓</div>
+          <div class="flow-label">Dépôt client</div>
+          <div class="flow-desc">Le client dépose le montant sur son compte BatiConnect</div>
+        </div>
+        <div class="flow-step done">
+          <div class="flow-num done">✓</div>
+          <div class="flow-label">Argent bloqué</div>
+          <div class="flow-desc">Le montant est bloqué en sécurité — ni le client ni l'artisan ne peut y toucher</div>
+        </div>
+        <div class="flow-step active">
+          <div class="flow-num active">▶</div>
+          <div class="flow-label">Travaux en cours</div>
+          <div class="flow-desc">L'artisan réalise les travaux et envoie des rapports réguliers</div>
+        </div>
+        <div class="flow-step pending">
+          <div class="flow-num pending">4</div>
+          <div class="flow-label">Validation client</div>
+          <div class="flow-desc">Le client valide la qualité et le respect des délais</div>
+        </div>
+        <div class="flow-step pending">
+          <div class="flow-num pending">5</div>
+          <div class="flow-label">Paiement libéré</div>
+          <div class="flow-desc">L'argent est versé à l'artisan, déduction faite des pénalités éventuelles</div>
+        </div>
+      </div>
+      <div class="alert alert-info" style="margin-top:20px;margin-bottom:0">
+        <span>💡</span>
+        <div>En cas de litige, notre équipe BatiConnect intervient comme <strong>arbitre neutre</strong> pour débloquer la situation équitablement.</div>
+      </div>
+    </div>
+
+    <!-- Missions actives -->
+    <div class="card">
+      <div class="card-title">📋 Missions avec paiement en cours</div>
+      <div class="jalon-item">
+        <div class="jalon-num paid">✓</div>
+        <div class="jalon-info">
+          <div class="jalon-title">Rénovation appartement F4 — Cotonou</div>
+          <div class="jalon-desc">Client : Marc Traoré · Jalon 3/4 · 65% terminé</div>
+          <div style="margin-top:8px">
+            <div class="progress-label-row"><span>Avancement</span><span style="color:var(--teal);font-weight:500">65%</span></div>
+            <div class="progress-bar"><div class="progress-fill fill-teal" style="width:65%"></div></div>
+          </div>
+        </div>
+        <div class="jalon-right">
+          <div class="jalon-amount">3 200 000</div>
+          <div style="font-size:11px;color:var(--gray-400)">FCFA bloqués</div>
+          <button class="btn btn-teal" style="margin-top:8px;padding:6px 12px;font-size:11px" onclick="showPage('detail-mission')">Voir détails</button>
+        </div>
+      </div>
+      <div class="jalon-item">
+        <div class="jalon-num current">▶</div>
+        <div class="jalon-info">
+          <div class="jalon-title">Pose carrelage résidence — Porto-Novo</div>
+          <div class="jalon-desc">Client : Aminata D. · En attente de validation finale</div>
+          <div style="margin-top:8px">
+            <div class="progress-label-row"><span>Avancement</span><span style="color:var(--orange);font-weight:500">90%</span></div>
+            <div class="progress-bar"><div class="progress-fill fill-orange" style="width:90%"></div></div>
+          </div>
+        </div>
+        <div class="jalon-right">
+          <div class="jalon-amount">850 000</div>
+          <div style="font-size:11px;color:var(--gray-400)">FCFA à valider</div>
+          <button class="btn btn-primary" style="margin-top:8px;padding:6px 12px;font-size:11px" onclick="showPage('validation')">Valider →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Historique récent -->
+    <div class="card">
+      <div class="card-title">📊 Dernières transactions <button class="btn btn-outline" style="margin-left:auto;padding:5px 12px;font-size:11px" onclick="showPage('historique')">Voir tout</button></div>
+      <div class="tx-item">
+        <div class="tx-icon in">✅</div>
+        <div class="tx-info">
+          <div class="tx-name">Paiement reçu — Plomberie Cotonou</div>
+          <div class="tx-meta">Client : Fatou K. · Mission terminée et validée</div>
+        </div>
+        <div class="tx-amount">
+          <div class="tx-val positive">+ 920 000 FCFA</div>
+          <div class="tx-date">10 Mars 2026</div>
+        </div>
+      </div>
+      <div class="tx-item">
+        <div class="tx-icon pen">⚠️</div>
+        <div class="tx-info">
+          <div class="tx-name">Pénalité — Retard de 5 jours</div>
+          <div class="tx-meta">Mission : Carrelage Porto-Novo · Délai non respecté</div>
+        </div>
+        <div class="tx-amount">
+          <div class="tx-val penalty">− 80 000 FCFA</div>
+          <div class="tx-date">08 Mars 2026</div>
+        </div>
+      </div>
+      <div class="tx-item">
+        <div class="tx-icon hold">🔒</div>
+        <div class="tx-info">
+          <div class="tx-name">Paiement bloqué — Rénovation F4</div>
+          <div class="tx-meta">En attente de validation des travaux</div>
+        </div>
+        <div class="tx-amount">
+          <div class="tx-val hold">⏳ 3 200 000 FCFA</div>
+          <div class="tx-date">01 Mars 2026</div>
+        </div>
+      </div>
+      <div class="tx-item">
+        <div class="tx-icon out">💸</div>
+        <div class="tx-info">
+          <div class="tx-name">Retrait vers MTN Mobile Money</div>
+          <div class="tx-meta">+229 97 XX XX XX · Traitement : 24h</div>
+        </div>
+        <div class="tx-amount">
+          <div class="tx-val negative">− 500 000 FCFA</div>
+          <div class="tx-date">25 Fév. 2026</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- PAGE 2 : DÉPÔT (CÔTÉ CLIENT)            -->
+<!-- ══════════════════════════════════════════ -->
+<div class="page" id="page-depot">
+  <div class="container" style="max-width:600px">
+    <button class="btn btn-outline" style="margin-bottom:24px" onclick="showPage('tableau-bord')">← Retour</button>
+    <div class="page-title">➕ Déposer un paiement</div>
+    <div class="page-sub">Sécurisez votre paiement pour démarrer les travaux</div>
+
+    <div class="alert alert-success">
+      <span>🔒</span>
+      <div><strong>Votre argent est protégé.</strong> Le montant sera bloqué et ne sera versé à l'artisan qu'après votre validation des travaux terminés.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">💳 Choisissez votre méthode de paiement</div>
+      <div class="payment-methods">
+        <div class="pm-card selected" onclick="selectPM(this)">
+          <div class="pm-logo">📱</div>
+          <div class="pm-name">MTN Mobile Money</div>
+          <div class="pm-detail">Bénin · Immédiat</div>
+        </div>
+        <div class="pm-card" onclick="selectPM(this)">
+          <div class="pm-logo">🟠</div>
+          <div class="pm-name">Moov Money</div>
+          <div class="pm-detail">Bénin · Immédiat</div>
+        </div>
+        <div class="pm-card" onclick="selectPM(this)">
+          <div class="pm-logo">🟡</div>
+          <div class="pm-name">Orange Money</div>
+          <div class="pm-detail">Afrique de l'Ouest</div>
+        </div>
+        <div class="pm-card" onclick="selectPM(this)">
+          <div class="pm-logo">🏦</div>
+          <div class="pm-name">Virement bancaire</div>
+          <div class="pm-detail">1 à 3 jours ouvrés</div>
+        </div>
+        <div class="pm-card" onclick="selectPM(this)">
+          <div class="pm-logo">💳</div>
+          <div class="pm-name">Carte bancaire</div>
+          <div class="pm-detail">Visa · Mastercard</div>
+        </div>
+        <div class="pm-card" onclick="selectPM(this)">
+          <div class="pm-logo">🌐</div>
+          <div class="pm-name">PayPal / Western Union</div>
+          <div class="pm-detail">Diaspora · International</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Mission concernée</label>
+        <select class="form-select">
+          <option>Construction villa 4 chambres — Kofi A. (12 000 000 FCFA)</option>
+          <option>Rénovation appartement F4 — Moussa S. (3 200 000 FCFA)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Montant à sécuriser (FCFA)</label>
+        <div class="amount-wrap">
+          <input class="form-input" type="number" id="depot-amount" placeholder="Ex: 2400000" value="2400000" oninput="updateDepotCalc()">
+          <span class="amount-currency">FCFA</span>
+        </div>
+      </div>
+
+      <div style="background:var(--gray-50);border-radius:var(--radius-md);padding:16px;margin-bottom:16px">
+        <div style="font-size:13px;font-weight:600;margin-bottom:12px">Récapitulatif</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;justify-content:space-between;font-size:13px;font-family:var(--font-body)">
+            <span style="color:var(--gray-600)">Montant des travaux</span>
+            <span id="depot-base">2 400 000 FCFA</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;font-family:var(--font-body)">
+            <span style="color:var(--gray-600)">Commission BatiConnect (8%)</span>
+            <span id="depot-commission" style="color:var(--orange)">− 192 000 FCFA</span>
+          </div>
+          <div style="height:1px;background:var(--gray-200);margin:4px 0"></div>
+          <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:700">
+            <span>Total à payer</span>
+            <span id="depot-total" style="color:var(--orange)">2 400 000 FCFA</span>
+          </div>
+          <div style="font-size:11px;color:var(--gray-400);font-family:var(--font-body)">La commission est déduite du montant lors du versement à l'artisan.</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Numéro Mobile Money</label>
+        <input class="form-input" type="tel" placeholder="+229 97 XX XX XX" value="+229 97 45 23 18">
+      </div>
+
+      <button class="btn btn-primary btn-full" onclick="showPage('depot-confirm')">
+        🔒 Sécuriser le paiement →
+      </button>
+      <div class="security-row">
+        <div class="security-item">🔐 SSL 256 bits</div>
+        <div class="security-item">🛡️ Fonds protégés</div>
+        <div class="security-item">✅ Remboursement garanti</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- PAGE 3 : CONFIRMATION DÉPÔT             -->
+<!-- ══════════════════════════════════════════ -->
+<div class="page" id="page-depot-confirm">
+  <div class="container" style="max-width:500px;text-align:center">
+    <div style="width:80px;height:80px;border-radius:50%;background:var(--teal-light);display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 24px" class="success-check">🔒</div>
+    <div class="page-title" style="margin-bottom:8px">Paiement sécurisé !</div>
+    <div class="page-sub" style="margin-bottom:24px">Votre montant de <strong style="color:var(--orange)">2 400 000 FCFA</strong> est maintenant bloqué en sécurité. Il sera versé à l'artisan uniquement après votre validation.</div>
+
+    <div class="alert alert-success" style="text-align:left">
+      <span>✅</span>
+      <div>
+        <strong>Que se passe-t-il maintenant ?</strong><br>
+        L'artisan a été notifié. Les travaux peuvent démarrer. Vous recevrez des rapports photo réguliers via l'application.
+      </div>
+    </div>
+
+    <div class="card" style="text-align:left">
+      <div class="card-title">📋 Détails de la transaction</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;justify-content:space-between;font-size:13px;font-family:var(--font-body)"><span style="color:var(--gray-400)">Référence</span><span style="font-weight:600">BC-2026-03847</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;font-family:var(--font-body)"><span style="color:var(--gray-400)">Mission</span><span style="font-weight:600">Rénovation F4 — Cotonou</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;font-family:var(--font-body)"><span style="color:var(--gray-400)">Artisan</span><span style="font-weight:600">Kofi Adetokunbo</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;font-family:var(--font-body)"><span style="color:var(--gray-400)">Montant bloqué</span><span style="font-weight:700;color:var(--orange)">2 400 000 FCFA</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;font-family:var(--font-body)"><span style="color:var(--gray-400)">Date</span><span>13 Mars 2026 · 14h32</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;font-family:var(--font-body)"><span style="color:var(--gray-400)">Statut</span><span class="badge badge-teal">✔ Sécurisé</span></div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button class="btn btn-teal btn-full" onclick="showPage('detail-mission')">📍 Suivre l'avancement des travaux</button>
+      <button class="btn btn-outline btn-full" onclick="showPage('tableau-bord')">Retour au tableau de bord</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- PAGE 4 : DÉTAIL MISSION + JALONS         -->
+<!-- ══════════════════════════════════════════ -->
+<div class="page" id="page-detail-mission">
+  <div class="container" style="max-width:760px">
+    <button class="btn btn-outline" style="margin-bottom:24px" onclick="showPage('tableau-bord')">← Retour</button>
+    <div class="page-title">📋 Rénovation appartement F4 — Cotonou</div>
+    <div class="page-sub">Artisan : Kofi Adetokunbo · Démarré le 01 Mars 2026</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:24px">
+      <div style="background:var(--teal-light);border-radius:var(--radius-md);padding:16px;text-align:center">
+        <div style="font-size:20px;font-weight:700;color:var(--teal)">3 200 000</div>
+        <div style="font-size:11px;color:var(--teal-dark);margin-top:3px">FCFA total bloqué</div>
+      </div>
+      <div style="background:var(--orange-light);border-radius:var(--radius-md);padding:16px;text-align:center">
+        <div style="font-size:20px;font-weight:700;color:var(--orange)">1 280 000</div>
+        <div style="font-size:11px;color:var(--orange-dark);margin-top:3px">FCFA déjà versés</div>
+      </div>
+      <div style="background:var(--gray-100);border-radius:var(--radius-md);padding:16px;text-align:center">
+        <div style="font-size:20px;font-weight:700;color:var(--gray-900)">1 920 000</div>
+        <div style="font-size:11px;color:var(--gray-400);margin-top:3px">FCFA restants</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📅 Paiement par jalons</div>
+      <div style="font-size:12px;color:var(--gray-400);font-family:var(--font-body);margin-bottom:16px">Le paiement est versé en 4 étapes selon l'avancement des travaux</div>
+
+      <div class="jalon-item">
+        <div class="jalon-num paid">✓</div>
+        <div class="jalon-info">
+          <div class="jalon-title">Jalon 1 — Démarrage & préparation</div>
+          <div class="jalon-desc">Versé à la signature du contrat numérique</div>
+        </div>
+        <div class="jalon-right">
+          <div class="jalon-amount">320 000 FCFA</div>
+          <div class="jalon-status"><span class="badge badge-teal">✓ Versé</span></div>
+        </div>
+      </div>
+
+      <div class="jalon-item">
+        <div class="jalon-num paid">✓</div>
+        <div class="jalon-info">
+          <div class="jalon-title">Jalon 2 — 25% des travaux terminés</div>
+          <div class="jalon-desc">Validé le 08 Mars 2026 après inspection photos</div>
+        </div>
+        <div class="jalon-right">
+          <div class="jalon-amount">960 000 FCFA</div>
+          <div class="jalon-status"><span class="badge badge-teal">✓ Versé</span></div>
+        </div>
+      </div>
+
+      <div class="jalon-item">
+        <div class="jalon-num current">▶</div>
+        <div class="jalon-info">
+          <div class="jalon-title">Jalon 3 — 65% des travaux terminés</div>
+          <div class="jalon-desc">En cours · Avancement : 65% · Prochain rapport dans 2 jours</div>
+          <div style="margin-top:8px">
+            <div class="progress-label-row"><span>Progression</span><span style="color:var(--orange);font-weight:600">65%</span></div>
+            <div class="progress-bar"><div class="progress-fill fill-orange" style="width:65%"></div></div>
+          </div>
+        </div>
+        <div class="jalon-right">
+          <div class="jalon-amount">960 000 FCFA</div>
+          <div class="jalon-status"><span class="badge badge-orange">⏳ En cours</span></div>
+        </div>
+      </div>
+
+      <div class="jalon-item">
+        <div class="jalon-num pending">4</div>
+        <div class="jalon-info">
+          <div class="jalon-title">Jalon 4 — Livraison finale & validation</div>
+          <div class="jalon-desc">Versé après validation complète des travaux et notation</div>
+        </div>
+        <div class="jalon-right">
+          <div class="jalon-amount">960 000 FCFA</div>
+          <div class="jalon-status"><span class="badge badge-gray">⏸ En attente</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⚠️ Pénalités applicables</div>
+      <div class="alert alert-warning" style="margin-bottom:16px">
+        <span>ℹ️</span>
+        <div>Les pénalités sont calculées automatiquement selon le contrat numérique signé. Elles sont déduites du montant final versé à l'artisan.</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:0">
+        <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--gray-100);font-size:13px;font-family:var(--font-body)"><span style="color:var(--gray-600)">Retard par jour dépassé</span><span style="font-weight:500">0.5% du montant total</span></div>
+        <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--gray-100);font-size:13px;font-family:var(--font-body)"><span style="color:var(--gray-600)">Travail non conforme</span><span style="font-weight:500">Jusqu'à 20% de pénalité</span></div>
+        <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--gray-100);font-size:13px;font-family:var(--font-body)"><span style="color:var(--gray-600)">Abandon de chantier</span><span style="font-weight:500">100% remboursé au client</span></div>
+        <div style="display:flex;justify-content:space-between;padding:10px 0;font-size:13px;font-family:var(--font-body)"><span style="color:var(--gray-600)">Pénalités actuelles</span><span style="font-weight:700;color:var(--red)">− 0 FCFA (aucune)</span></div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:12px">
+      <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="showPage('validation')">✅ Valider les travaux</button>
+      <button class="btn btn-red" style="flex:1;justify-content:center" onclick="openDispute()">⚠️ Signaler un problème</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- PAGE 5 : VALIDATION & LIBÉRATION        -->
+<!-- ══════════════════════════════════════════ -->
+<div class="page" id="page-validation">
+  <div class="container" style="max-width:620px">
+    <button class="btn btn-outline" style="margin-bottom:24px" onclick="showPage('detail-mission')">← Retour</button>
+    <div class="page-title">✅ Valider et libérer le paiement</div>
+    <div class="page-sub">Pose carrelage résidence — Aminata D.</div>
+
+    <div class="alert alert-warning">
+      <span>⚠️</span>
+      <div>En validant, vous confirmez que les travaux sont terminés et conformes à votre demande. <strong>Cette action est irréversible.</strong></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⭐ Évaluation finale (obligatoire)</div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div>
+          <div style="font-size:13px;font-weight:500;margin-bottom:8px;display:flex;justify-content:space-between">Qualité du travail <span style="color:var(--amber)">★★★★★ 5/5</span></div>
+          <div style="display:flex;gap:8px" id="stars-qual">
+            <span style="font-size:26px;cursor:pointer;color:var(--amber)" onclick="rate('qual',1)">★</span>
+            <span style="font-size:26px;cursor:pointer;color:var(--amber)" onclick="rate('qual',2)">★</span>
+            <span style="font-size:26px;cursor:pointer;color:var(--amber)" onclick="rate('qual',3)">★</span>
+            <span style="font-size:26px;cursor:pointer;color:var(--amber)" onclick="rate('qual',4)">★</span>
+            <span style="font-size:26px;cursor:pointer;color:var(--amber)" onclick="rate('qual',5)">★</span>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:500;margin-bottom:8px;display:flex;justify-content:space-between">Respect du délai <span style="color:var(--amber)">★★★☆☆ 3/5</span></div>
+          <div style="display:flex;gap:8px">
+            <span style="font-size:26px;cursor:pointer;color:var(--amber)">★</span>
+            <span style="font-size:26px;cursor:pointer;color:var(--amber)">★</span>
+            <span style="font-size:26px;cursor:pointer;color:var(--amber)">★</span>
+            <span style="font-size:26px;cursor:pointer;color:var(--gray-200)">★</span>
+            <span style="font-size:26px;cursor:pointer;color:var(--gray-200)">★</span>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:500;margin-bottom:8px;display:flex;justify-content:space-between">Professionnalisme <span style="color:var(--amber)">★★★★☆ 4/5</span></div>
+          <div style="display:flex;gap:8px">
+            <span style="font-size:26px;cursor:pointer;color:var(--amber)">★</span>
+            <span style="font-size:26px;cursor:pointer;color:var(--amber)">★</span>
+            <span style="font-size:26px;cursor:pointer;color:var(--amber)">★</span>
+            <span style="font-size:26px;cursor:pointer;color:var(--amber)">★</span>
+            <span style="font-size:26px;cursor:pointer;color:var(--gray-200)">★</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">💰 Récapitulatif du paiement final</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;justify-content:space-between;font-size:13px;font-family:var(--font-body)"><span style="color:var(--gray-600)">Montant total convenu</span><span>850 000 FCFA</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;font-family:var(--font-body)"><span style="color:var(--gray-600)">Commission BatiConnect (8%)</span><span style="color:var(--orange)">− 68 000 FCFA</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;font-family:var(--font-body)"><span style="color:var(--red)">Pénalité retard (5 jours × 0.5%)</span><span style="color:var(--red)">− 21 250 FCFA</span></div>
+        <div style="height:1px;background:var(--gray-200);margin:4px 0"></div>
+        <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:700"><span>Versement à l'artisan</span><span style="color:var(--teal)">760 750 FCFA</span></div>
+      </div>
+      <div class="alert alert-info" style="margin-top:16px;margin-bottom:0">
+        <span>ℹ️</span>
+        <div>La pénalité de <strong>21 250 FCFA</strong> a été appliquée automatiquement pour le retard de 5 jours selon le contrat numérique.</div>
+      </div>
+    </div>
+
+    <button class="btn btn-teal btn-full" style="font-size:15px;padding:15px" onclick="showPage('paiement-libere')">
+      ✅ Confirmer la validation et libérer le paiement
+    </button>
+    <button class="btn btn-outline btn-full" style="margin-top:10px" onclick="showPage('detail-mission')">
+      Annuler
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- PAGE 6 : PAIEMENT LIBÉRÉ                -->
+<!-- ══════════════════════════════════════════ -->
+<div class="page" id="page-paiement-libere">
+  <div class="container" style="max-width:500px;text-align:center">
+    <div style="width:88px;height:88px;border-radius:50%;background:var(--teal-light);display:flex;align-items:center;justify-content:center;font-size:40px;margin:0 auto 24px" class="success-check">🎉</div>
+    <div class="page-title" style="margin-bottom:8px">Paiement libéré !</div>
+    <div class="page-sub" style="margin-bottom:24px">
+      <strong style="color:var(--teal)">760 750 FCFA</strong> ont été versés à Kofi Adetokunbo sur son compte BatiConnect. Il peut retirer cet argent via Mobile Money dès maintenant.
+    </div>
+
+    <div class="card" style="text-align:left">
+      <div class="card-title">📋 Reçu de transaction</div>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;font-family:var(--font-body)">
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--gray-400)">Référence</span><span style="font-weight:600">BC-PAY-20260313-7284</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--gray-400)">Artisan</span><span>Kofi Adetokunbo</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--gray-400)">Mission</span><span>Pose carrelage Porto-Novo</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--gray-400)">Montant versé</span><span style="font-weight:700;color:var(--teal)">760 750 FCFA</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--gray-400)">Commission</span><span style="color:var(--orange)">68 000 FCFA</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--gray-400)">Pénalité</span><span style="color:var(--red)">21 250 FCFA</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--gray-400)">Date</span><span>13 Mars 2026 · 16h47</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--gray-400)">Statut</span><span class="badge badge-teal">✔ Complété</span></div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button class="btn btn-primary btn-full" onclick="showPage('tableau-bord')">Retour au tableau de bord</button>
+      <button class="btn btn-outline btn-full">📥 Télécharger le reçu PDF</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- PAGE 7 : RETRAIT                        -->
+<!-- ══════════════════════════════════════════ -->
+<div class="page" id="page-retrait">
+  <div class="container" style="max-width:560px">
+    <button class="btn btn-outline" style="margin-bottom:24px" onclick="showPage('tableau-bord')">← Retour</button>
+    <div class="page-title">💸 Retirer mes fonds</div>
+    <div class="page-sub">Solde disponible : <strong style="color:var(--teal)">845 000 FCFA</strong></div>
+
+    <div class="card">
+      <div class="card-title">📱 Choisissez le mode de retrait</div>
+      <div class="payment-methods" style="grid-template-columns:1fr 1fr">
+        <div class="pm-card selected" onclick="selectPM(this)">
+          <div class="pm-logo">📱</div>
+          <div class="pm-name">MTN Mobile Money</div>
+          <div class="pm-detail">Immédiat · 0% frais</div>
+        </div>
+        <div class="pm-card" onclick="selectPM(this)">
+          <div class="pm-logo">🟠</div>
+          <div class="pm-name">Moov Money</div>
+          <div class="pm-detail">Immédiat · 0% frais</div>
+        </div>
+        <div class="pm-card" onclick="selectPM(this)">
+          <div class="pm-logo">🏦</div>
+          <div class="pm-name">Virement bancaire</div>
+          <div class="pm-detail">1-3 jours · 0% frais</div>
+        </div>
+        <div class="pm-card" onclick="selectPM(this)">
+          <div class="pm-logo">🌐</div>
+          <div class="pm-name">Western Union</div>
+          <div class="pm-detail">Diaspora · Frais variables</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Montant à retirer (FCFA)</label>
+        <div class="amount-wrap">
+          <input class="form-input" type="number" placeholder="Max : 845 000" value="500000">
+          <span class="amount-currency">FCFA</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Numéro de réception</label>
+        <input class="form-input" type="tel" placeholder="+229 97 XX XX XX" value="+229 97 45 23 18">
+      </div>
+
+      <div class="alert alert-success" style="margin-bottom:16px">
+        <span>⏱️</span>
+        <div>Délai de traitement : <strong>Immédiat à 24h</strong> selon la méthode choisie. Aucuns frais de retrait pour Mobile Money.</div>
+      </div>
+
+      <button class="btn btn-primary btn-full" style="font-size:15px;padding:14px" onclick="showPage('retrait-confirm')">
+        💸 Confirmer le retrait →
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- PAGE 8 : HISTORIQUE COMPLET             -->
+<!-- ══════════════════════════════════════════ -->
+<div class="page" id="page-historique">
+  <div class="container" style="max-width:760px">
+    <button class="btn btn-outline" style="margin-bottom:24px" onclick="showPage('tableau-bord')">← Retour</button>
+    <div class="page-title">📊 Historique des transactions</div>
+    <div class="page-sub">Toutes vos transactions BatiConnect</div>
+
+    <div class="tab-bar">
+      <button class="tab active" onclick="setTab(this)">Tout</button>
+      <button class="tab" onclick="setTab(this)">💰 Reçus</button>
+      <button class="tab" onclick="setTab(this)">💸 Retraits</button>
+      <button class="tab" onclick="setTab(this)">🔒 Bloqués</button>
+      <button class="tab" onclick="setTab(this)">⚠️ Pénalités</button>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div style="font-size:13px;font-weight:600">Mars 2026</div>
+        <div style="font-size:12px;color:var(--teal);font-weight:500">Solde net : + 340 000 FCFA</div>
+      </div>
+      <div class="tx-item">
+        <div class="tx-icon in">✅</div>
+        <div class="tx-info"><div class="tx-name">Paiement reçu — Plomberie Cotonou</div><div class="tx-meta">Mission complétée · Ref: BC-2026-03847</div></div>
+        <div class="tx-amount"><div class="tx-val positive">+ 920 000 FCFA</div><div class="tx-date">10 Mars 2026</div></div>
+      </div>
+      <div class="tx-item">
+        <div class="tx-icon pen">⚠️</div>
+        <div class="tx-info"><div class="tx-name">Pénalité retard — Carrelage Porto-Novo</div><div class="tx-meta">5 jours de retard × 0.5% × 850 000</div></div>
+        <div class="tx-amount"><div class="tx-val penalty">− 21 250 FCFA</div><div class="tx-date">08 Mars 2026</div></div>
+      </div>
+      <div class="tx-item">
+        <div class="tx-icon hold">🔒</div>
+        <div class="tx-info"><div class="tx-name">Paiement bloqué — Rénovation F4</div><div class="tx-meta">En attente de validation finale</div></div>
+        <div class="tx-amount"><div class="tx-val hold">⏳ 3 200 000 FCFA</div><div class="tx-date">01 Mars 2026</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="font-size:13px;font-weight:600;margin-bottom:16px">Février 2026</div>
+      <div class="tx-item">
+        <div class="tx-icon out">💸</div>
+        <div class="tx-info"><div class="tx-name">Retrait MTN Mobile Money</div><div class="tx-meta">+229 97 45 23 18 · Traité en 2 min</div></div>
+        <div class="tx-amount"><div class="tx-val negative">− 500 000 FCFA</div><div class="tx-date">25 Fév. 2026</div></div>
+      </div>
+      <div class="tx-item">
+        <div class="tx-icon in">✅</div>
+        <div class="tx-info"><div class="tx-name">Paiement reçu — Menuiserie Parakou</div><div class="tx-meta">Jalon 2/2 · Mission terminée</div></div>
+        <div class="tx-amount"><div class="tx-val positive">+ 680 000 FCFA</div><div class="tx-date">20 Fév. 2026</div></div>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:8px">
+      <button class="btn btn-outline">📥 Exporter en PDF / Excel</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE RETRAIT CONFIRMÉ -->
+<div class="page" id="page-retrait-confirm">
+  <div class="container" style="max-width:480px;text-align:center">
+    <div style="width:80px;height:80px;border-radius:50%;background:var(--teal-light);display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 24px" class="success-check">💸</div>
+    <div class="page-title" style="margin-bottom:8px">Retrait en cours !</div>
+    <div class="page-sub" style="margin-bottom:24px"><strong style="color:var(--orange)">500 000 FCFA</strong> seront transférés sur votre MTN Mobile Money dans quelques minutes.</div>
+    <button class="btn btn-primary btn-full" onclick="showPage('tableau-bord')">Retour au tableau de bord</button>
+  </div>
+</div>
+
+<!-- MODAL LITIGE -->
+<div class="modal-overlay" id="modal-dispute">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">⚠️ Signaler un problème</div>
+      <button class="modal-close" onclick="closeDispute()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="alert alert-warning" style="margin-bottom:16px">
+        <span>ℹ️</span>
+        <div>Notre équipe d'arbitrage examinera votre litige sous <strong>48h</strong> et prendra une décision équitable basée sur les preuves.</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Type de problème</label>
+        <select class="form-select">
+          <option>Travail non conforme à la demande</option>
+          <option>Retard excessif non justifié</option>
+          <option>Abandon de chantier</option>
+          <option>Matériaux de mauvaise qualité</option>
+          <option>Désaccord sur le montant final</option>
+          <option>Autre problème</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description du problème</label>
+        <textarea class="form-input" rows="4" placeholder="Décrivez le problème en détail avec les dates, faits et preuves disponibles..." style="resize:vertical;line-height:1.6"></textarea>
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Photos / preuves (optionnel)</label>
+        <div style="border:2px dashed var(--gray-200);border-radius:var(--radius-sm);padding:16px;text-align:center;cursor:pointer;font-size:12px;color:var(--gray-400);font-family:var(--font-body)">📎 Ajouter des photos ou documents</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeDispute()">Annuler</button>
+      <button class="btn btn-red" onclick="closeDispute()">⚠️ Soumettre le litige</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const p = document.getElementById('page-' + id);
+    if (p) { p.classList.add('active'); window.scrollTo({top:0,behavior:'smooth'}); }
+  }
+
+  function selectPM(el) {
+    el.closest('.payment-methods').querySelectorAll('.pm-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  function setTab(btn) {
+    btn.closest('.tab-bar').querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  function updateDepotCalc() {
+    const val = parseFloat(document.getElementById('depot-amount').value) || 0;
+    const commission = Math.round(val * 0.08);
+    document.getElementById('depot-base').textContent = val.toLocaleString('fr-FR') + ' FCFA';
+    document.getElementById('depot-commission').textContent = '− ' + commission.toLocaleString('fr-FR') + ' FCFA';
+    document.getElementById('depot-total').textContent = val.toLocaleString('fr-FR') + ' FCFA';
+  }
+
+  function openDispute() { document.getElementById('modal-dispute').classList.add('open'); }
+  function closeDispute() { document.getElementById('modal-dispute').classList.remove('open'); }
+
+  function rate(cat, stars) {
+    const row = document.getElementById('stars-' + cat);
+    if (!row) return;
+    row.querySelectorAll('span').forEach((s, i) => {
+      s.style.color = i < stars ? 'var(--amber)' : 'var(--gray-200)';
+    });
+  }
+</script>
+</body>
+</html>

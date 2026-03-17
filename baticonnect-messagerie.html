@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BatiConnect — Messagerie Sécurisée</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const db = supabase.createClient("https://qlpsantpdtarnrqnjmik.supabase.co", "sb_publishable_7TrwU7Q2o69F1R6xKy3-Qg_jvCgSElW");
+  function toast(msg, type) {
+    var colors = {success:"#1D9E75", error:"#A32D2D", info:"#D85A30"};
+    var icons  = {success:"&#x2705;", error:"&#x274C;", info:"&#x1F4A1;"};
+    type = type || "success";
+    var el = document.createElement("div");
+    el.style.cssText = "position:fixed;bottom:24px;right:24px;z-index:9999;background:#fff;border-left:4px solid " + (colors[type]||"#1D9E75") + ";padding:14px 18px;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.15);font-family:Sora,sans-serif;font-size:13px;display:flex;align-items:center;gap:10px;max-width:340px";
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(function(){ el.remove(); }, 3500);
+  }
+  async function getUser() {
+    var r = await db.auth.getUser();
+    return r.data.user;
+  }
+  function fmtFCFA(n) {
+    return new Intl.NumberFormat("fr-FR").format(n) + " FCFA";
+  }
+</script>
+<style>@keyframes toastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}</style>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=DM+Sans:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --orange: #D85A30; --orange-light: #FAECE7; --orange-dark: #993C1D;
+    --teal: #1D9E75; --teal-light: #E1F5EE; --teal-dark: #085041;
+    --amber: #BA7517; --amber-light: #FAEEDA;
+    --red: #A32D2D; --red-light: #FCEBEB;
+    --blue: #185FA5; --blue-light: #E6F1FB;
+    --gray-50: #F9F8F5; --gray-100: #F1EFE8; --gray-200: #D3D1C7;
+    --gray-400: #888780; --gray-600: #5F5E5A; --gray-900: #2C2C2A;
+    --white: #FFFFFF;
+    --font: 'Sora', sans-serif; --font-body: 'DM Sans', sans-serif;
+    --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px; --radius-xl: 24px;
+    --shadow-sm: 0 1px 4px rgba(0,0,0,0.06); --shadow-md: 0 4px 20px rgba(0,0,0,0.08);
+  }
+  body { font-family: var(--font); background: var(--gray-50); color: var(--gray-900); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* NAVBAR */
+  .navbar { background: var(--white); border-bottom: 1px solid var(--gray-100); padding: 0 20px; height: 58px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; box-shadow: var(--shadow-sm); z-index: 100; }
+  .logo { display: flex; align-items: center; gap: 9px; cursor: pointer; }
+  .logo-icon { width: 34px; height: 34px; background: var(--orange); border-radius: 9px; display: flex; align-items: center; justify-content: center; }
+  .logo-icon svg { width: 17px; height: 17px; fill: white; }
+  .logo-text { font-size: 16px; font-weight: 700; }
+  .logo-text span { color: var(--orange); }
+  .nav-secure { font-size: 11px; color: var(--teal-dark); background: var(--teal-light); padding: 4px 10px; border-radius: 20px; font-weight: 500; }
+  .nav-user { display: flex; align-items: center; gap: 8px; }
+  .nav-avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--orange), var(--orange-dark)); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: white; }
+
+  /* LAYOUT */
+  .messenger { display: flex; flex: 1; overflow: hidden; }
+
+  /* SIDEBAR */
+  .conv-sidebar { width: 310px; flex-shrink: 0; background: var(--white); border-right: 1px solid var(--gray-100); display: flex; flex-direction: column; overflow: hidden; }
+  .conv-header { padding: 14px 16px; border-bottom: 1px solid var(--gray-100); flex-shrink: 0; }
+  .conv-header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .conv-title { font-size: 15px; font-weight: 700; }
+  .unread-pill { background: var(--orange); color: white; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
+  .search-box { display: flex; align-items: center; gap: 8px; background: var(--gray-50); border: 1.5px solid var(--gray-100); border-radius: var(--radius-sm); padding: 8px 12px; }
+  .search-box input { flex: 1; border: none; background: transparent; font-size: 12px; font-family: var(--font-body); color: var(--gray-900); outline: none; }
+  .search-box input::placeholder { color: var(--gray-400); }
+  .conv-tabs { display: flex; padding: 8px 12px 0; gap: 4px; flex-shrink: 0; }
+  .ctab { flex: 1; padding: 7px 6px; border-radius: var(--radius-sm); font-size: 11px; font-weight: 500; cursor: pointer; border: none; background: transparent; color: var(--gray-400); font-family: var(--font); transition: all 0.18s; text-align: center; }
+  .ctab.active { background: var(--orange-light); color: var(--orange-dark); }
+  .conv-list { flex: 1; overflow-y: auto; }
+
+  .conv-item { display: flex; align-items: center; gap: 11px; padding: 12px 16px; cursor: pointer; transition: background 0.15s; }
+  .conv-item:hover { background: var(--gray-50); }
+  .conv-item.active { background: var(--orange-light); }
+  .c-avatar { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; color: white; flex-shrink: 0; position: relative; }
+  .av-o { background: linear-gradient(135deg, var(--orange), var(--orange-dark)); }
+  .av-t { background: linear-gradient(135deg, var(--teal), var(--teal-dark)); }
+  .av-a { background: linear-gradient(135deg, var(--amber), #633806); }
+  .av-b { background: linear-gradient(135deg, var(--blue), #042C53); }
+  .av-g { background: linear-gradient(135deg, #6B7280, #374151); }
+  .dot { position: absolute; bottom: 1px; right: 1px; width: 11px; height: 11px; border-radius: 50%; border: 2px solid var(--white); }
+  .dot-on { background: var(--teal); }
+  .dot-off { background: var(--gray-400); }
+  .c-info { flex: 1; min-width: 0; }
+  .c-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .c-preview { font-size: 11px; color: var(--gray-400); font-family: var(--font-body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+  .c-preview.bold { color: var(--gray-700); font-weight: 500; }
+  .c-tag { font-size: 10px; color: var(--teal-dark); background: var(--teal-light); padding: 2px 7px; border-radius: 20px; font-weight: 500; margin-top: 4px; white-space: nowrap; display: inline-block; }
+  .c-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+  .c-time { font-size: 10px; color: var(--gray-400); font-family: var(--font-body); }
+  .c-badge { background: var(--orange); color: white; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px; min-width: 20px; text-align: center; }
+
+  /* CHAT ZONE */
+  .chat-zone { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .chat-header { background: var(--white); border-bottom: 1px solid var(--gray-100); padding: 12px 20px; display: flex; align-items: center; gap: 13px; flex-shrink: 0; box-shadow: var(--shadow-sm); }
+  .ch-avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: white; flex-shrink: 0; position: relative; }
+  .ch-info { flex: 1; }
+  .ch-name { font-size: 14px; font-weight: 700; }
+  .ch-status { font-size: 11px; color: var(--teal); font-family: var(--font-body); margin-top: 2px; }
+  .ch-actions { display: flex; gap: 6px; }
+  .ch-btn { width: 34px; height: 34px; border-radius: 50%; border: none; background: var(--gray-100); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 15px; transition: background 0.18s; }
+  .ch-btn:hover { background: var(--gray-200); }
+
+  /* Mission bar */
+  .mission-bar { background: var(--white); border-bottom: 1px solid var(--gray-100); padding: 9px 20px; display: flex; align-items: center; gap: 11px; flex-shrink: 0; }
+  .mbar-icon { width: 30px; height: 30px; border-radius: var(--radius-sm); background: var(--orange-light); display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .mbar-info { flex: 1; }
+  .mbar-name { font-size: 12px; font-weight: 600; }
+  .mbar-sub { font-size: 10px; color: var(--gray-400); font-family: var(--font-body); margin-top: 1px; }
+  .badge { display: inline-flex; align-items: center; gap: 3px; padding: 3px 9px; border-radius: 20px; font-size: 10px; font-weight: 600; }
+  .badge-teal { background: var(--teal-light); color: var(--teal-dark); }
+  .badge-orange { background: var(--orange-light); color: var(--orange-dark); }
+
+  /* Messages */
+  .messages { flex: 1; overflow-y: auto; padding: 18px 20px; display: flex; flex-direction: column; gap: 3px; background: var(--gray-50); }
+  .date-div { display: flex; align-items: center; gap: 10px; margin: 12px 0 8px; }
+  .date-line { flex: 1; height: 1px; background: var(--gray-200); }
+  .date-text { font-size: 11px; color: var(--gray-400); font-family: var(--font-body); padding: 0 4px; white-space: nowrap; }
+  .sys-wrap { display: flex; justify-content: center; margin: 6px 0; }
+  .sys-msg { font-size: 11px; color: var(--gray-400); font-family: var(--font-body); background: var(--white); padding: 5px 14px; border-radius: 20px; border: 1px solid var(--gray-200); text-align: center; max-width: 380px; }
+
+  .row { display: flex; align-items: flex-end; gap: 7px; margin-bottom: 1px; }
+  .row.me { flex-direction: row-reverse; }
+  .row-av { width: 27px; height: 27px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: white; flex-shrink: 0; }
+  .spacer { width: 27px; flex-shrink: 0; }
+  .bub { max-width: 65%; padding: 10px 14px; border-radius: 18px; font-size: 13px; font-family: var(--font-body); line-height: 1.6; word-break: break-word; }
+  .bub.me { background: var(--orange); color: white; border-bottom-right-radius: 4px; }
+  .bub.other { background: var(--white); color: var(--gray-900); border-bottom-left-radius: 4px; box-shadow: var(--shadow-sm); border: 1px solid var(--gray-100); }
+  .bub-time { font-size: 10px; margin-top: 4px; display: flex; align-items: center; gap: 3px; }
+  .bub.me .bub-time { color: rgba(255,255,255,0.6); justify-content: flex-end; }
+  .bub.other .bub-time { color: var(--gray-400); }
+
+  /* Photo grid */
+  .photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; max-width: 220px; border-radius: var(--radius-md); overflow: hidden; cursor: pointer; }
+  .pg-cell { aspect-ratio: 1; background: var(--gray-200); display: flex; align-items: center; justify-content: center; font-size: 22px; position: relative; }
+  .pg-more { position: absolute; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; color: white; font-size: 15px; font-weight: 700; }
+
+  /* File bubble */
+  .file-bub { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: var(--radius-md); cursor: pointer; min-width: 190px; }
+  .file-bub.me { background: rgba(255,255,255,0.15); }
+  .file-bub.other { background: var(--gray-50); border: 1px solid var(--gray-100); }
+  .fi { width: 34px; height: 34px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; background: rgba(255,255,255,0.2); }
+  .fi.other { background: var(--orange-light); }
+  .fn { font-size: 12px; font-weight: 600; }
+  .fs { font-size: 11px; opacity: 0.65; margin-top: 1px; }
+
+  /* Voice */
+  .voice-bub { display: flex; align-items: center; gap: 9px; padding: 10px 13px; border-radius: 22px; min-width: 190px; cursor: pointer; }
+  .voice-bub.me { background: var(--orange); }
+  .voice-bub.other { background: var(--white); border: 1px solid var(--gray-100); box-shadow: var(--shadow-sm); }
+  .vplay { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+  .vplay.me { background: rgba(255,255,255,0.2); }
+  .vplay.other { background: var(--orange-light); }
+  .vwave { flex: 1; display: flex; align-items: center; gap: 2px; height: 26px; }
+  .vbar { width: 3px; border-radius: 2px; }
+  .vbar.me { background: rgba(255,255,255,0.4); }
+  .vbar.me.lit { background: white; }
+  .vbar.other { background: var(--gray-200); }
+  .vbar.other.lit { background: var(--orange); }
+  .vdur { font-size: 11px; }
+  .vdur.me { color: rgba(255,255,255,0.65); }
+  .vdur.other { color: var(--gray-400); }
+
+  /* Typing */
+  .typing-row { display: flex; align-items: flex-end; gap: 7px; }
+  .typing-bub { background: var(--white); border: 1px solid var(--gray-100); border-radius: 18px; border-bottom-left-radius: 4px; padding: 12px 14px; box-shadow: var(--shadow-sm); display: flex; gap: 4px; align-items: center; }
+  .tdot { width: 6px; height: 6px; background: var(--gray-400); border-radius: 50%; animation: bounce 1.4s infinite; }
+  .tdot:nth-child(2) { animation-delay: 0.2s; }
+  .tdot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce { 0%,80%,100%{transform:translateY(0);opacity:0.4} 40%{transform:translateY(-4px);opacity:1} }
+
+  /* Input */
+  .input-area { background: var(--white); border-top: 1px solid var(--gray-100); padding: 10px 16px 12px; flex-shrink: 0; }
+  .toolbar { display: flex; align-items: center; gap: 7px; margin-bottom: 9px; }
+  .tbtn { width: 31px; height: 31px; border-radius: var(--radius-sm); border: none; background: var(--gray-100); display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; transition: background 0.18s; }
+  .tbtn:hover { background: var(--orange-light); }
+  .tlabel { font-size: 11px; color: var(--gray-400); font-family: var(--font-body); margin-left: 4px; }
+  .input-row { display: flex; align-items: flex-end; gap: 9px; }
+  .msg-input { flex: 1; background: var(--gray-50); border: 1.5px solid var(--gray-200); border-radius: 21px; padding: 10px 16px; font-size: 13px; font-family: var(--font-body); color: var(--gray-900); outline: none; resize: none; max-height: 110px; overflow-y: auto; line-height: 1.5; transition: border-color 0.2s; }
+  .msg-input:focus { border-color: var(--orange); background: var(--white); }
+  .msg-input::placeholder { color: var(--gray-400); }
+  .send-btn { width: 40px; height: 40px; border-radius: 50%; border: none; background: var(--orange); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; transition: all 0.2s; flex-shrink: 0; }
+  .send-btn:hover { background: var(--orange-dark); transform: scale(1.06); }
+  .mic-btn { width: 40px; height: 40px; border-radius: 50%; border: none; background: var(--gray-100); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 17px; flex-shrink: 0; }
+  .mic-btn:hover { background: var(--orange-light); }
+  .sec-note { text-align: center; font-size: 10px; color: var(--gray-400); font-family: var(--font-body); padding-top: 6px; }
+
+  /* Right panel */
+  .rpanel { width: 270px; flex-shrink: 0; background: var(--white); border-left: 1px solid var(--gray-100); display: flex; flex-direction: column; overflow-y: auto; }
+  .rps { padding: 14px 16px; border-bottom: 1px solid var(--gray-100); }
+  .rps-title { font-size: 11px; font-weight: 600; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 11px; }
+  .rp-person { display: flex; flex-direction: column; align-items: center; text-align: center; }
+  .rp-av { width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; color: white; margin-bottom: 9px; }
+  .rp-name { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+  .rp-role { font-size: 11px; color: var(--gray-400); font-family: var(--font-body); margin-bottom: 9px; }
+  .rp-badges { display: flex; gap: 5px; justify-content: center; flex-wrap: wrap; }
+  .rp-row { display: flex; justify-content: space-between; font-size: 12px; padding: 7px 0; border-bottom: 1px solid var(--gray-100); font-family: var(--font-body); }
+  .rp-row:last-child { border-bottom: none; }
+  .rp-row-label { color: var(--gray-400); }
+  .rp-row-val { font-weight: 500; }
+  .media-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; }
+  .mthumb { aspect-ratio: 1; background: var(--gray-100); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 19px; cursor: pointer; }
+  .rp-btn { width: 100%; padding: 8px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 500; cursor: pointer; border: 1.5px solid var(--gray-200); background: var(--white); color: var(--gray-600); font-family: var(--font); transition: all 0.18s; margin-top: 6px; }
+  .rp-btn:hover { border-color: var(--orange); color: var(--orange); }
+  .rp-btn.red { border-color: var(--red-light); color: var(--red); }
+  .rp-btn.red:hover { background: var(--red-light); }
+
+  @media (max-width: 900px) { .rpanel { display: none; } }
+  @media (max-width: 600px) {
+    .conv-sidebar { width: 66px; }
+    .c-info, .c-meta, .conv-header-top > :not(.unread-pill), .search-box, .conv-tabs { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="logo">
+    <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22" fill="none" stroke="white" stroke-width="1.5"/></svg></div>
+    <span class="logo-text">Bati<span>Connect</span></span>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600">💬 Messagerie <span class="nav-secure">🔒 Chiffrée bout en bout</span></div>
+  <div class="nav-user"><div class="nav-avatar">KA</div><span style="font-size:12px;font-weight:500">Kofi A.</span></div>
+</nav>
+
+<div class="messenger">
+
+  <!-- ── SIDEBAR ── -->
+  <div class="conv-sidebar">
+    <div class="conv-header">
+      <div class="conv-header-top">
+        <div class="conv-title">Messages</div>
+        <span class="unread-pill">3 nouveaux</span>
+      </div>
+      <div class="search-box">
+        <span style="font-size:13px">🔍</span>
+        <input type="text" placeholder="Rechercher un contact...">
+      </div>
+    </div>
+    <div class="conv-tabs">
+      <button class="ctab active" onclick="setTab(this)">Tous</button>
+      <button class="ctab" onclick="setTab(this)">Missions</button>
+      <button class="ctab" onclick="setTab(this)">Archivés</button>
+    </div>
+    <div class="conv-list">
+
+      <div class="conv-item active" onclick="selConv(this)">
+        <div class="c-avatar av-b">MT<span class="dot dot-on"></span></div>
+        <div class="c-info">
+          <div class="c-name">Marc Traoré</div>
+          <div class="c-preview bold">📷 3 photos de chantier</div>
+          <div class="c-tag">🏗️ Rénovation F4 Cotonou</div>
+        </div>
+        <div class="c-meta"><div class="c-time">14h32</div><div class="c-badge">3</div></div>
+      </div>
+
+      <div class="conv-item" onclick="selConv(this)">
+        <div class="c-avatar av-t">AD<span class="dot dot-off"></span></div>
+        <div class="c-info">
+          <div class="c-name">Aminata Diallo</div>
+          <div class="c-preview">D'accord, on commence lundi 👍</div>
+          <div class="c-tag">🪟 Menuiserie Porto-Novo</div>
+        </div>
+        <div class="c-meta"><div class="c-time">11h20</div></div>
+      </div>
+
+      <div class="conv-item" onclick="selConv(this)">
+        <div class="c-avatar" style="background:var(--orange)">🛡️</div>
+        <div class="c-info">
+          <div class="c-name">BatiConnect Support</div>
+          <div class="c-preview bold">Votre mission a été validée ✅</div>
+        </div>
+        <div class="c-meta"><div class="c-time">Hier</div><div class="c-badge">1</div></div>
+      </div>
+
+      <div class="conv-item" onclick="selConv(this)">
+        <div class="c-avatar av-a">FK<span class="dot dot-on"></span></div>
+        <div class="c-info">
+          <div class="c-name">Fatou Kouyaté</div>
+          <div class="c-preview">🎤 Message vocal · 0:34</div>
+          <div class="c-tag">⚡ Électricité Calavi</div>
+        </div>
+        <div class="c-meta"><div class="c-time">Hier</div></div>
+      </div>
+
+      <div class="conv-item" onclick="selConv(this)">
+        <div class="c-avatar av-g">IS<span class="dot dot-off"></span></div>
+        <div class="c-info">
+          <div class="c-name">Ibrahim Sawadogo</div>
+          <div class="c-preview">📄 Devis_final_v2.pdf</div>
+          <div class="c-tag">🔧 Plomberie Parakou</div>
+        </div>
+        <div class="c-meta"><div class="c-time">Lun.</div></div>
+      </div>
+
+      <div class="conv-item" onclick="selConv(this)">
+        <div class="c-avatar av-o">JK<span class="dot dot-off"></span></div>
+        <div class="c-info">
+          <div class="c-name">Jean Koffi</div>
+          <div class="c-preview">Merci pour la collaboration !</div>
+          <div class="c-tag">🎨 Peinture Cotonou</div>
+        </div>
+        <div class="c-meta"><div class="c-time">Sam.</div></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── CHAT ── -->
+  <div class="chat-zone">
+    <div class="chat-header">
+      <div class="ch-avatar av-b">MT<span class="dot dot-on" style="position:absolute;bottom:1px;right:1px"></span></div>
+      <div class="ch-info">
+        <div class="ch-name">Marc Traoré</div>
+        <div class="ch-status">🟢 En ligne · Paris, France 🇫🇷</div>
+      </div>
+      <div class="ch-actions">
+        <button class="ch-btn" title="Appel vidéo">📹</button>
+        <button class="ch-btn" title="Voir la mission">📋</button>
+        <button class="ch-btn" title="Plus d'options">⋯</button>
+      </div>
+    </div>
+
+    <div class="mission-bar">
+      <div class="mbar-icon">🏗️</div>
+      <div class="mbar-info">
+        <div class="mbar-name">Rénovation appartement F4 — Cotonou</div>
+        <div class="mbar-sub">Budget : 3 200 000 FCFA · Jalon 3/4 · Avancement 65%</div>
+      </div>
+      <span class="badge badge-teal">● En cours</span>
+    </div>
+
+    <div class="messages" id="messages">
+
+      <div class="date-div"><div class="date-line"></div><div class="date-text">Lundi 09 Mars 2026</div><div class="date-line"></div></div>
+
+      <div class="sys-wrap"><div class="sys-msg">🔒 Conversation chiffrée de bout en bout. BatiConnect ne peut pas lire vos messages.</div></div>
+
+      <!-- Reçu -->
+      <div class="row other">
+        <div class="row-av av-b">MT</div>
+        <div class="bub other">
+          Bonjour Kofi ! Vous pouvez m'envoyer des photos de l'avancement du salon aujourd'hui ? Je suis à Paris et j'aimerais voir l'état des travaux 🙏
+          <div class="bub-time">09:14 ✓</div>
+        </div>
+        <div class="spacer"></div>
+      </div>
+
+      <!-- Envoyé -->
+      <div class="row me">
+        <div class="spacer"></div>
+        <div class="bub me">
+          Bonjour Marc ! Oui bien sûr, je vous envoie les photos de ce matin. Le carrelage du salon est terminé ✅
+          <div class="bub-time">09:31 ✓✓</div>
+        </div>
+        <div class="row-av av-o">KA</div>
+      </div>
+
+      <!-- Photos grid -->
+      <div class="row me">
+        <div class="spacer"></div>
+        <div>
+          <div class="photo-grid">
+            <div class="pg-cell">🏠</div><div class="pg-cell">🧱</div>
+            <div class="pg-cell">🪟</div>
+            <div class="pg-cell">🏗️<div class="pg-more">+5</div></div>
+          </div>
+          <div style="font-size:10px;color:var(--gray-400);text-align:right;margin-top:3px">09:32 ✓✓</div>
+        </div>
+        <div class="row-av av-o">KA</div>
+      </div>
+
+      <!-- Reçu -->
+      <div class="row other">
+        <div class="row-av av-b">MT</div>
+        <div class="bub other">
+          Excellent ! Le carrelage est vraiment bien posé 👌 Vous en êtes à combien de % au total ?
+          <div class="bub-time">10:05 ✓</div>
+        </div>
+        <div class="spacer"></div>
+      </div>
+
+      <!-- Envoyé -->
+      <div class="row me">
+        <div class="spacer"></div>
+        <div class="bub me">
+          Environ 65%. Il reste la peinture des chambres, la 2ème salle de bain et les finitions. On sera dans les délais 💪
+          <div class="bub-time">10:12 ✓✓</div>
+        </div>
+        <div class="row-av av-o">KA</div>
+      </div>
+
+      <!-- Fichier envoyé -->
+      <div class="row me">
+        <div class="spacer"></div>
+        <div>
+          <div class="file-bub me">
+            <div class="fi">📄</div>
+            <div><div class="fn" style="color:white">Rapport_chantier_S10.pdf</div><div class="fs" style="color:rgba(255,255,255,0.6)">842 Ko · Rapport hebdomadaire</div></div>
+            <span style="color:rgba(255,255,255,0.5);font-size:16px">⬇</span>
+          </div>
+          <div style="font-size:10px;color:var(--gray-400);text-align:right;margin-top:3px">10:13 ✓✓</div>
+        </div>
+        <div class="row-av av-o">KA</div>
+      </div>
+
+      <div class="date-div"><div class="date-line"></div><div class="date-text">Aujourd'hui — 13 Mars 2026</div><div class="date-line"></div></div>
+
+      <!-- Message vocal reçu -->
+      <div class="row other">
+        <div class="row-av av-b">MT</div>
+        <div>
+          <div class="voice-bub other" onclick="togglePlay(this)">
+            <div class="vplay other">▶</div>
+            <div class="vwave" id="wv1"></div>
+            <div class="vdur other">0:28</div>
+          </div>
+          <div style="font-size:10px;color:var(--gray-400);margin-top:3px">14:10 ✓</div>
+        </div>
+        <div class="spacer"></div>
+      </div>
+
+      <!-- Reçu -->
+      <div class="row other">
+        <div class="row-av av-b">MT</div>
+        <div class="bub other">
+          J'ai bien reçu le rapport, merci ! Pouvez-vous me préparer un devis pour les matériaux restants ? Je dois faire un point avec ma famille à Paris 😊
+          <div class="bub-time">14:28 ✓</div>
+        </div>
+        <div class="spacer"></div>
+      </div>
+
+      <!-- Envoyé -->
+      <div class="row me">
+        <div class="spacer"></div>
+        <div class="bub me">
+          Bien sûr ! Je vous prépare ça pour demain matin. Je vais lister tous les matériaux qu'il reste : peinture, tuyaux, accessoires sanitaires et les finitions.
+          <div class="bub-time">14:45 ✓✓</div>
+        </div>
+        <div class="row-av av-o">KA</div>
+      </div>
+
+      <!-- Message vocal envoyé -->
+      <div class="row me">
+        <div class="spacer"></div>
+        <div>
+          <div class="voice-bub me" onclick="togglePlay(this)">
+            <div class="vplay me">▶</div>
+            <div class="vwave" id="wv2"></div>
+            <div class="vdur me">0:15</div>
+          </div>
+          <div style="font-size:10px;color:var(--gray-400);text-align:right;margin-top:3px">14:47 ✓✓</div>
+        </div>
+        <div class="row-av av-o">KA</div>
+      </div>
+
+      <!-- Reçu avec emoji -->
+      <div class="row other">
+        <div class="row-av av-b">MT</div>
+        <div class="bub other">
+          Parfait merci Kofi 🙏 Continuez comme ça, je suis vraiment content de la qualité du travail !
+          <div class="bub-time">14:55 ✓</div>
+        </div>
+        <div class="spacer"></div>
+      </div>
+
+      <!-- Typing -->
+      <div class="typing-row" id="typing">
+        <div class="row-av av-b">MT</div>
+        <div class="typing-bub">
+          <div class="tdot"></div><div class="tdot"></div><div class="tdot"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Input -->
+    <div class="input-area">
+      <div class="toolbar">
+        <button class="tbtn" title="Photo / Vidéo">📷</button>
+        <button class="tbtn" title="Fichier">📎</button>
+        <button class="tbtn" title="Localisation GPS">📍</button>
+        <button class="tbtn" title="Rapport de chantier">📋</button>
+        <button class="tbtn" title="Devis">💰</button>
+        <span class="tlabel">Joindre :</span>
+      </div>
+      <div class="input-row">
+        <button class="mic-btn">🎤</button>
+        <textarea class="msg-input" id="msg-input" placeholder="Message sécurisé…" rows="1"
+          oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg()}"></textarea>
+        <button class="send-btn" onclick="sendMsg()">➤</button>
+      </div>
+      <div class="sec-note">🔒 Chiffré de bout en bout · Aucun employé BatiConnect ne peut lire vos messages</div>
+    </div>
+  </div>
+
+  <!-- ── PANNEAU DROIT ── -->
+  <div class="rpanel">
+    <div class="rps">
+      <div class="rps-title">Interlocuteur</div>
+      <div class="rp-person">
+        <div class="rp-av av-b">MT</div>
+        <div class="rp-name">Marc Traoré</div>
+        <div class="rp-role">Client · Paris, France 🇫🇷</div>
+        <div class="rp-badges">
+          <span class="badge badge-teal">✔ Vérifié</span>
+          <span class="badge badge-orange">5 missions</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="rps">
+      <div class="rps-title">Mission en cours</div>
+      <div style="background:var(--orange-light);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px">
+        <div style="font-size:12px;font-weight:600;margin-bottom:6px">🏗️ Rénovation F4 — Cotonou</div>
+        <div class="rp-row" style="padding:3px 0;border:none"><span class="rp-row-label">Budget</span><span style="font-weight:700;color:var(--orange)">3 200 000 FCFA</span></div>
+        <div class="rp-row" style="padding:3px 0;border:none"><span class="rp-row-label">Avancement</span><span style="color:var(--teal);font-weight:600">65%</span></div>
+        <div class="rp-row" style="padding:3px 0;border:none"><span class="rp-row-label">Délai restant</span><span>~6 semaines</span></div>
+      </div>
+      <button class="rp-btn">📍 Suivi chantier</button>
+      <button class="rp-btn">💰 Paiement sécurisé</button>
+    </div>
+
+    <div class="rps">
+      <div class="rps-title">Médias partagés (18)</div>
+      <div class="media-grid">
+        <div class="mthumb">🏠</div><div class="mthumb">🧱</div><div class="mthumb">🪟</div>
+        <div class="mthumb">🏗️</div><div class="mthumb">🚪</div>
+        <div class="mthumb" style="font-size:12px;font-weight:600;color:var(--gray-600)">+13</div>
+      </div>
+    </div>
+
+    <div class="rps">
+      <div class="rps-title">Documents (3)</div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <div style="display:flex;align-items:center;gap:7px;padding:7px;background:var(--gray-50);border-radius:var(--radius-sm);cursor:pointer;font-size:11px;font-family:var(--font-body)">
+          <span>📄</span><span style="flex:1">Rapport_S10.pdf</span><span style="color:var(--gray-400)">⬇</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:7px;padding:7px;background:var(--gray-50);border-radius:var(--radius-sm);cursor:pointer;font-size:11px;font-family:var(--font-body)">
+          <span>📐</span><span style="flex:1">Plan_appart_F4.pdf</span><span style="color:var(--gray-400)">⬇</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:7px;padding:7px;background:var(--gray-50);border-radius:var(--radius-sm);cursor:pointer;font-size:11px;font-family:var(--font-body)">
+          <span>💰</span><span style="flex:1">Devis_materiaux.xlsx</span><span style="color:var(--gray-400)">⬇</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="rps">
+      <div class="rps-title">Actions</div>
+      <button class="rp-btn">🔕 Mettre en sourdine</button>
+      <button class="rp-btn">📂 Archiver</button>
+      <button class="rp-btn red">🚫 Signaler un problème</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Generate waveform
+  function genWave(id, type) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const h = [5,8,13,18,22,16,10,14,20,24,18,12,16,22,18,14,8,12,18,16,10,6,14,20];
+    h.forEach((v, i) => {
+      const b = document.createElement('div');
+      b.className = `vbar ${type}${i < 9 ? ' lit' : ''}`;
+      b.style.height = v + 'px';
+      el.appendChild(b);
+    });
+  }
+  genWave('wv1', 'other');
+  genWave('wv2', 'me');
+
+  function setTab(btn) {
+    btn.closest('.conv-tabs').querySelectorAll('.ctab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  function selConv(el) {
+    document.querySelectorAll('.conv-item').forEach(i => i.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  function togglePlay(el) {
+    const btn = el.querySelector('.vplay');
+    btn.textContent = btn.textContent === '▶' ? '⏸' : '▶';
+  }
+
+  function sendMsg() {
+    const inp = document.getElementById('msg-input');
+    const txt = inp.value.trim();
+    if (!txt) return;
+    const msgs = document.getElementById('messages');
+    const typing = document.getElementById('typing');
+
+    const row = document.createElement('div');
+    row.className = 'row me';
+    const now = new Date().toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'});
+    row.innerHTML = `
+      <div class="spacer"></div>
+      <div class="bub me">${txt}<div class="bub-time">${now} ✓</div></div>
+      <div class="row-av av-o">KA</div>
+    `;
+    msgs.insertBefore(row, typing);
+    inp.value = '';
+    inp.style.height = 'auto';
+    msgs.scrollTop = msgs.scrollHeight;
+
+    setTimeout(() => {
+      const r2 = document.createElement('div');
+      r2.className = 'row other';
+      const t2 = new Date().toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'});
+      r2.innerHTML = `
+        <div class="row-av av-b">MT</div>
+        <div class="bub other">Merci pour l'info ! Je prends note 👍<div class="bub-time">${t2} ✓</div></div>
+        <div class="spacer"></div>
+      `;
+      msgs.insertBefore(r2, typing);
+      msgs.scrollTop = msgs.scrollHeight;
+    }, 2000);
+  }
+
+  // Scroll to bottom
+  window.addEventListener('load', () => {
+    const m = document.getElementById('messages');
+    m.scrollTop = m.scrollHeight;
+  });
+</script>
+</body>
+</html>

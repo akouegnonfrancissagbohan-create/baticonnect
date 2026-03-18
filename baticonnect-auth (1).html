@@ -1015,10 +1015,6 @@ async function doRegister() {
     }
 
     toast('Compte créé avec succès ! Vérifiez votre email. 📧');
-    // Envoyer email de bienvenue automatiquement
-    try { await emailBienvenue(email, prenom, role); } catch(e) { console.log('Email non envoyé:', e); }
-      // Envoyer email de bienvenue
-      envoyerEmailBienvenue(email, prenom, role);
     setTimeout(function(){ showAuth('verify-email'); }, 1500);
 
   } catch(err) {
@@ -1070,106 +1066,6 @@ window.addEventListener('load', async function() {
     setTimeout(function(){ window.location.href = 'index.html'; }, 1500);
   }
 });
-</script>
-
-<script>
-// ── EMAILS AUTOMATIQUES (Resend) ──
-const RESEND_KEY = 're_M6uUxMhX_7wx25h1bPFTxUYQRMJXRTCc3';
-
-async function envoyerEmailBienvenue(email, prenom, role) {
-  const roleLabel = role === 'prestataire' ? 'Prestataire / Artisan' : 'Demandeur de services';
-  try {
-    await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + RESEND_KEY,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        from: 'BatiConnect <onboarding@resend.dev>',
-        to: [email],
-        subject: '🎉 Bienvenue sur BatiConnect !',
-        html: `
-          <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08)">
-            <div style="background:linear-gradient(135deg,#1a0f0a,#993C1D 60%,#D87040);padding:28px 32px">
-              <div style="font-size:22px;font-weight:700;color:white">🏗️ Bati<span style="color:#FFD4C0">Connect</span></div>
-            </div>
-            <div style="padding:32px">
-              <h2 style="font-size:22px;margin-bottom:12px;color:#2C2C2A">Bienvenue ${prenom} ! 🎉</h2>
-              <p style="font-size:15px;color:#5F5E5A;line-height:1.7;margin-bottom:16px">Votre compte BatiConnect a été créé avec succès.</p>
-              <div style="background:#F9F8F5;border-radius:10px;padding:16px 20px;margin:16px 0">
-                <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #F1EFE8;font-size:14px">
-                  <span style="color:#888780">Rôle</span><span style="font-weight:600">${roleLabel}</span>
-                </div>
-                <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:14px">
-                  <span style="color:#888780">Email</span><span style="font-weight:600">${email}</span>
-                </div>
-              </div>
-              <a href="https://akouegnonfrancissagbohan-create.github.io/baticonnect" style="display:inline-block;background:#D85A30;color:white;padding:13px 28px;border-radius:10px;font-size:15px;font-weight:600;text-decoration:none;margin-top:8px">Accéder à mon compte →</a>
-            </div>
-            <div style="padding:16px 32px;background:#F9F8F5;text-align:center;font-size:12px;color:#888780">
-              © 2026 BatiConnect — Plateforme africaine de confiance
-            </div>
-          </div>
-        `
-      })
-    });
-    console.log('Email de bienvenue envoyé à ' + email);
-  } catch(err) {
-    console.log('Email non envoyé (normal en local):', err.message);
-  }
-}
-</script>
-
-<script>
-// ── EMAILS AUTOMATIQUES RESEND ──
-const RESEND_KEY = 're_M6uUxMhX_7wx25h1bPFTxUYQRMJXRTCc3';
-
-async function envoyerEmail(destinataire, sujet, html) {
-  try {
-    const r = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + RESEND_KEY,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        from: 'BatiConnect <onboarding@resend.dev>',
-        to: [destinataire],
-        subject: sujet,
-        html: html
-      })
-    });
-    const d = await r.json();
-    console.log('Email envoyé:', d);
-    return d;
-  } catch(e) {
-    console.error('Erreur email:', e);
-  }
-}
-
-async function emailBienvenue(destinataire, prenom, role) {
-  const roleLabel = role === 'prestataire' ? 'artisan' : 'client';
-  const html = `<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;background:#F9F8F5;margin:0;padding:20px">
-    <div style="max-width:560px;margin:0 auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08)">
-      <div style="background:linear-gradient(135deg,#1a0f0a,#993C1D,#D87040);padding:28px;text-align:center">
-        <span style="font-size:22px;font-weight:700;color:white">🏗️ BatiConnect</span>
-      </div>
-      <div style="padding:32px">
-        <h1 style="font-size:22px;color:#2C2C2A;margin:0 0 12px">Bienvenue ${prenom} ! 🎉</h1>
-        <p style="font-size:14px;color:#5F5E5A">Votre compte ${roleLabel} a été créé avec succès sur BatiConnect.</p>
-        <div style="background:#FAECE7;border-radius:10px;padding:16px;margin:20px 0">
-          <p style="margin:0;font-size:13px;color:#993C1D">✅ Complétez votre profil<br>✅ ${role === 'prestataire' ? 'Uploadez vos documents' : 'Publiez votre première annonce'}</p>
-        </div>
-        <a href="https://akouegnonfrancissagbohan-create.github.io/baticonnect" style="display:block;background:#D85A30;color:white;text-align:center;padding:14px;border-radius:10px;text-decoration:none;font-weight:600">Accéder à mon compte →</a>
-      </div>
-      <div style="padding:16px;background:#F9F8F5;text-align:center">
-        <p style="font-size:11px;color:#888780;margin:0">© 2026 BatiConnect · Cotonou, Bénin</p>
-      </div>
-    </div>
-  </body></html>`;
-  return await envoyerEmail(destinataire, '🎉 Bienvenue sur BatiConnect, ' + prenom + ' !', html);
-}
 </script>
 </body>
 </html>

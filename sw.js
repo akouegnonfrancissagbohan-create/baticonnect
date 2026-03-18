@@ -9,19 +9,19 @@ const CACHE_OFFLINE = 'baticonnect-offline-v1';
 
 // Fichiers à mettre en cache pour le mode hors ligne
 const FILES_A_CACHER = [
-  '/baticonnect/',
-  '/baticonnect/index.html',
-  '/baticonnect/baticonnect-auth.html',
-  '/baticonnect/baticonnect-profils.html',
-  '/baticonnect/baticonnect-publication.html',
-  '/baticonnect/baticonnect-messagerie.html',
-  '/baticonnect/baticonnect-paiement.html',
-  '/baticonnect/baticonnect-suivi-chantier.html',
-  '/baticonnect/baticonnect-notation.html',
-  '/baticonnect/baticonnect-admin.html',
-  '/baticonnect/manifest.json',
-  '/baticonnect/icons/icon-192.png',
-  '/baticonnect/icons/icon-512.png'
+  './',
+  './index.html',
+  './baticonnect-auth.html',
+  './baticonnect-profils.html',
+  './baticonnect-publication.html',
+  './baticonnect-messagerie.html',
+  './baticonnect-paiement.html',
+  './baticonnect-suivi-chantier.html',
+  './baticonnect-notation.html',
+  './baticonnect-admin.html',
+  './manifest.json',
+  './icons/icon-192.png',
+  './icons/icon-512.png'
 ];
 
 // ── INSTALLATION ──
@@ -83,7 +83,7 @@ self.addEventListener('fetch', event => {
         return reponseReseau;
       }).catch(() => {
         // Hors ligne → page de fallback
-        return caches.match('/baticonnect/index.html');
+        return caches.match('./index.html');
       });
     })
   );
@@ -94,14 +94,14 @@ self.addEventListener('push', event => {
   const data = event.data ? event.data.json() : {};
   const titre   = data.titre   || 'BatiConnect';
   const message = data.message || 'Vous avez une nouvelle notification';
-  const icon    = data.icon    || '/baticonnect/icons/icon-192.png';
-  const url     = data.url     || '/baticonnect/index.html';
+  const icon    = data.icon    || './icons/icon-192.png';
+  const url     = data.url     || './index.html';
 
   event.waitUntil(
     self.registration.showNotification(titre, {
       body:    message,
       icon:    icon,
-      badge:   '/baticonnect/icons/icon-72.png',
+      badge:   './icons/icon-72.png',
       vibrate: [200, 100, 200],
       data:    { url },
       actions: [
@@ -117,7 +117,7 @@ self.addEventListener('notificationclick', event => {
   event.notification.close();
   if (event.action === 'fermer') return;
 
-  const url = event.notification.data?.url || '/baticonnect/index.html';
+  const url = event.notification.data?.url || './index.html';
   event.waitUntil(
     clients.matchAll({ type: 'window' }).then(clientsList => {
       for (const client of clientsList) {

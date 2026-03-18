@@ -2,14 +2,17 @@
   "name": "BatiConnect",
   "short_name": "BatiConnect",
   "description": "La plateforme de confiance pour vos travaux en Afrique",
-  "start_url": "/baticonnect/index.html",
-  "scope": "/baticonnect/",
+  "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#F9F8F5",
   "theme_color": "#D85A30",
   "lang": "fr",
-  "categories": ["business", "utilities"],
+  "categories": [
+    "business",
+    "utilities"
+  ],
   "icons": [
     {
       "src": "icons/icon-72.png",
@@ -64,20 +67,35 @@
     {
       "name": "Mes annonces",
       "short_name": "Annonces",
-      "url": "/baticonnect/baticonnect-publication.html",
-      "icons": [{ "src": "icons/icon-96.png", "sizes": "96x96" }]
+      "url": "./baticonnect-publication.html",
+      "icons": [
+        {
+          "src": "icons/icon-96.png",
+          "sizes": "96x96"
+        }
+      ]
     },
     {
       "name": "Messagerie",
       "short_name": "Messages",
-      "url": "/baticonnect/baticonnect-messagerie.html",
-      "icons": [{ "src": "icons/icon-96.png", "sizes": "96x96" }]
+      "url": "./baticonnect-messagerie.html",
+      "icons": [
+        {
+          "src": "icons/icon-96.png",
+          "sizes": "96x96"
+        }
+      ]
     },
     {
       "name": "Suivi chantier",
       "short_name": "Chantier",
-      "url": "/baticonnect/baticonnect-suivi-chantier.html",
-      "icons": [{ "src": "icons/icon-96.png", "sizes": "96x96" }]
+      "url": "./baticonnect-suivi-chantier.html",
+      "icons": [
+        {
+          "src": "icons/icon-96.png",
+          "sizes": "96x96"
+        }
+      ]
     }
   ]
 }

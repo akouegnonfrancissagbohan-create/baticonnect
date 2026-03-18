@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Installer BatiConnect</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#D85A30">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="BatiConnect">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Sora', sans-serif;
+    background: linear-gradient(135deg, #1a0f0a 0%, #993C1D 50%, #D87040 100%);
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  .card {
+    background: white; border-radius: 28px; padding: 40px 32px;
+    text-align: center; max-width: 420px; width: 100%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+  .app-icon {
+    width: 96px; height: 96px; background: #D85A30;
+    border-radius: 22px; margin: 0 auto 20px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 48px; box-shadow: 0 8px 24px rgba(216,90,48,0.4);
+  }
+  .app-name { font-size: 26px; font-weight: 800; margin-bottom: 4px; color: #2C2C2A; }
+  .app-name span { color: #D85A30; }
+  .app-tagline { font-size: 13px; color: #888780; font-family: 'DM Sans', sans-serif; margin-bottom: 28px; line-height: 1.6; }
+
+  .stats { display: flex; gap: 0; margin-bottom: 28px; border: 1.5px solid #F1EFE8; border-radius: 14px; overflow: hidden; }
+  .stat { flex: 1; padding: 14px 8px; }
+  .stat:not(:last-child) { border-right: 1.5px solid #F1EFE8; }
+  .stat-val { font-size: 18px; font-weight: 700; color: #D85A30; }
+  .stat-label { font-size: 10px; color: #888780; font-family: 'DM Sans', sans-serif; margin-top: 2px; }
+
+  /* Bouton Android */
+  .btn-install {
+    width: 100%; padding: 16px 24px; background: #D85A30; color: white;
+    border: none; border-radius: 14px; font-size: 15px; font-weight: 700;
+    cursor: pointer; font-family: 'Sora', sans-serif;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    margin-bottom: 12px; transition: all 0.2s;
+    box-shadow: 0 4px 20px rgba(216,90,48,0.35);
+  }
+  .btn-install:hover { background: #993C1D; transform: translateY(-1px); }
+  .btn-install:disabled { background: #D3D1C7; box-shadow: none; cursor: not-allowed; transform: none; }
+
+  /* Bouton accès direct */
+  .btn-web {
+    width: 100%; padding: 14px 24px; background: white; color: #5F5E5A;
+    border: 1.5px solid #D3D1C7; border-radius: 14px; font-size: 14px; font-weight: 600;
+    cursor: pointer; font-family: 'Sora', sans-serif;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    margin-bottom: 24px; transition: all 0.2s; text-decoration: none;
+  }
+  .btn-web:hover { border-color: #D85A30; color: #D85A30; }
+
+  .divider { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .divider-line { flex: 1; height: 1px; background: #F1EFE8; }
+  .divider-text { font-size: 11px; color: #888780; font-family: 'DM Sans', sans-serif; }
+
+  /* Instructions iOS */
+  .ios-steps { display: none; text-align: left; background: #F9F8F5; border-radius: 14px; padding: 18px; margin-bottom: 16px; }
+  .ios-steps.show { display: block; }
+  .ios-title { font-size: 13px; font-weight: 600; margin-bottom: 12px; color: #2C2C2A; }
+  .ios-step { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; font-size: 13px; font-family: 'DM Sans', sans-serif; color: #5F5E5A; line-height: 1.5; }
+  .ios-step:last-child { margin-bottom: 0; }
+  .ios-num { width: 22px; height: 22px; background: #D85A30; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+
+  /* Badges features */
+  .features { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .feature { background: #F9F8F5; border: 1px solid #F1EFE8; border-radius: 20px; padding: 6px 12px; font-size: 11px; color: #5F5E5A; font-family: 'DM Sans', sans-serif; }
+
+  /* Installé */
+  .installed-msg { display: none; background: #E1F5EE; border-radius: 12px; padding: 14px 16px; margin-bottom: 16px; font-size: 13px; color: #085041; font-family: 'DM Sans', sans-serif; }
+  .installed-msg.show { display: block; }
+
+  /* Détection plateforme */
+  .platform-hint { font-size: 11px; color: #888780; font-family: 'DM Sans', sans-serif; margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="app-icon">🏗️</div>
+  <div class="app-name">Bati<span>Connect</span></div>
+  <div class="app-tagline">La plateforme de confiance pour vos<br>travaux de construction en Afrique</div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-val">8</div><div class="stat-label">Modules</div></div>
+    <div class="stat"><div class="stat-val">100%</div><div class="stat-label">Gratuit</div></div>
+    <div class="stat"><div class="stat-val">🇧🇯</div><div class="stat-label">Made in Bénin</div></div>
+  </div>
+
+  <!-- Message si déjà installé -->
+  <div class="installed-msg" id="installed-msg">
+    ✅ BatiConnect est déjà installé sur votre appareil !
+  </div>
+
+  <!-- Bouton installation Android/Chrome -->
+  <button class="btn-install" id="btn-android" onclick="installerApp()" style="display:none">
+    📲 Installer l'application
+  </button>
+  <div class="platform-hint" id="hint-android" style="display:none">Fonctionne sans internet après installation</div>
+
+  <!-- Instructions iPhone/Safari -->
+  <button class="btn-install" id="btn-ios" onclick="toggleIOS()" style="display:none">
+    📲 Installer sur iPhone
+  </button>
+
+  <div class="ios-steps" id="ios-steps">
+    <div class="ios-title">📱 Comment installer sur iPhone :</div>
+    <div class="ios-step">
+      <div class="ios-num">1</div>
+      <div>Ouvrez ce lien dans <strong>Safari</strong> (pas Chrome)</div>
+    </div>
+    <div class="ios-step">
+      <div class="ios-num">2</div>
+      <div>Appuyez sur le bouton <strong>Partager</strong> <span style="font-size:16px">⬆️</span> en bas de l'écran</div>
+    </div>
+    <div class="ios-step">
+      <div class="ios-num">3</div>
+      <div>Faites défiler et appuyez sur <strong>"Sur l'écran d'accueil"</strong> 📱</div>
+    </div>
+    <div class="ios-step">
+      <div class="ios-num">4</div>
+      <div>Appuyez sur <strong>"Ajouter"</strong> en haut à droite ✅</div>
+    </div>
+  </div>
+
+  <div class="divider">
+    <div class="divider-line"></div>
+    <div class="divider-text">OU</div>
+    <div class="divider-line"></div>
+  </div>
+
+  <a class="btn-web" href="index.html">
+    🌐 Utiliser depuis le navigateur
+  </a>
+
+  <div class="features">
+    <span class="feature">📶 Fonctionne hors ligne</span>
+    <span class="feature">🔔 Notifications</span>
+    <span class="feature">📷 Photos chantier</span>
+    <span class="feature">💰 Paiement sécurisé</span>
+    <span class="feature">💬 Messagerie</span>
+    <span class="feature">📍 GPS vérifié</span>
+  </div>
+</div>
+
+<script>
+  let deferredPrompt = null;
+
+  // Détecter la plateforme
+  const isIOS     = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isAndroid = /Android/.test(navigator.userAgent);
+  const isSafari  = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+  const isInApp   = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+
+  // Si déjà installé
+  if (isInApp) {
+    document.getElementById('installed-msg').classList.add('show');
+    setTimeout(() => { window.location.href = 'index.html'; }, 2000);
+  }
+  // iPhone / iPad
+  else if (isIOS) {
+    document.getElementById('btn-ios').style.display = 'flex';
+    if (!isSafari) {
+      document.getElementById('ios-steps').classList.add('show');
+    }
+  }
+
+  // Android / Chrome — attendre le prompt
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferredPrompt = e;
+    document.getElementById('btn-android').style.display = 'flex';
+    document.getElementById('hint-android').style.display = 'block';
+  });
+
+  // App installée avec succès
+  window.addEventListener('appinstalled', () => {
+    document.getElementById('btn-android').style.display = 'none';
+    document.getElementById('hint-android').style.display = 'none';
+    document.getElementById('installed-msg').classList.add('show');
+    deferredPrompt = null;
+  });
+
+  // Si ni iOS ni Android, afficher quand même le bouton si prompt disponible
+  if (!isIOS && !isAndroid) {
+    // Desktop Chrome
+    window.addEventListener('beforeinstallprompt', e => {
+      e.preventDefault();
+      deferredPrompt = e;
+      document.getElementById('btn-android').style.display = 'flex';
+      document.getElementById('btn-android').innerHTML = '💻 Installer l\'application sur mon PC';
+    });
+  }
+
+  function installerApp() {
+    if (!deferredPrompt) {
+      alert('Utilisez le menu de votre navigateur pour installer l\'app.');
+      return;
+    }
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(result => {
+      if (result.outcome === 'accepted') {
+        document.getElementById('installed-msg').classList.add('show');
+        document.getElementById('btn-android').style.display = 'none';
+      }
+      deferredPrompt = null;
+    });
+  }
+
+  function toggleIOS() {
+    const steps = document.getElementById('ios-steps');
+    steps.classList.toggle('show');
+  }
+
+  // Enregistrer le service worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js')
+      .then(reg => console.log('SW OK:', reg.scope))
+      .catch(err => console.log('SW erreur:', err));
+  }
+</script>
+</body>
+</html>

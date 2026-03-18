@@ -4,6 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BatiConnect — Connexion & Sécurité</title>
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#D85A30">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="BatiConnect">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
   const db = supabase.createClient("https://rtxhvnbvggrpieiqyctb.supabase.co", "sb_publishable__rbR0__Prwc2wTYoYD9Dfw_SY6wAt7x");
@@ -963,6 +972,99 @@
   }
 </script>
 
+
+<script>
+// ── SYSTÈME EMAILS RESEND ──
+const RESEND_KEY = 're_DETRdrrC_9gmixqXgHdWNcTxuzgQ6HUMB';
+
+async function envoyerEmail(destinataire, sujet, html) {
+  try {
+    const r = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + RESEND_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from: 'BatiConnect <onboarding@resend.dev>',
+        to: [destinataire],
+        subject: sujet,
+        html: html
+      })
+    });
+    const data = await r.json();
+    console.log('Email envoyé:', data);
+    return data;
+  } catch(e) {
+    console.error('Erreur email:', e);
+  }
+}
+
+async function emailBienvenue(prenom, email, role) {
+  const roleLabel = role === 'prestataire' ? 'Prestataire / Artisan' : 'Demandeur de services';
+  const html = `
+    <!DOCTYPE html><html><head><meta charset="UTF-8">
+    <style>body{font-family:Arial,sans-serif;background:#F9F8F5;margin:0;padding:0}
+    .wrap{max-width:560px;margin:0 auto;padding:24px}
+    .header{background:linear-gradient(135deg,#1a0f0a,#993C1D,#D87040);border-radius:12px 12px 0 0;padding:24px;text-align:center}
+    .logo{font-size:22px;font-weight:800;color:white}.logo span{color:#FFD4C0}
+    .body{background:white;padding:28px;border-radius:0 0 12px 12px;box-shadow:0 4px 20px rgba(0,0,0,.08)}
+    .btn{display:inline-block;background:#D85A30;color:white;padding:13px 26px;border-radius:10px;text-decoration:none;font-weight:700;margin:16px 0}
+    .box{background:#F9F8F5;border-radius:8px;padding:14px;margin:14px 0}
+    .row{display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:1px solid #F1EFE8}
+    .row:last-child{border-bottom:none}.lbl{color:#888}.val{font-weight:600}
+    h2{font-size:19px;margin-bottom:8px}p{font-size:14px;line-height:1.8;color:#5F5E5A}
+    .footer{text-align:center;font-size:11px;color:#888;margin-top:16px}</style></head>
+    <body><div class="wrap">
+    <div class="header"><div class="logo">Bati<span>Connect</span></div></div>
+    <div class="body">
+      <h2>Bienvenue sur BatiConnect, ${prenom} ! 🎉</h2>
+      <p>Votre compte a été créé avec succès. Vous faites maintenant partie de la communauté BatiConnect.</p>
+      <div class="box">
+        <div class="row"><span class="lbl">Nom</span><span class="val">${prenom}</span></div>
+        <div class="row"><span class="lbl">Email</span><span class="val">${email}</span></div>
+        <div class="row"><span class="lbl">Profil</span><span class="val">${roleLabel}</span></div>
+      </div>
+      <a href="https://akouegnonfrancissagbohan-create.github.io/baticonnect" class="btn">Accéder à mon compte →</a>
+    </div>
+    <div class="footer">© 2026 BatiConnect · Cotonou, Bénin</div>
+    </div>
+<script>
+  // Enregistrer le Service Worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js')
+        .then(reg => console.log('SW enregistré:', reg.scope))
+        .catch(err => console.log('SW erreur:', err));
+    });
+  }
+
+  // Bouton "Installer l'app"
+  let deferredPrompt;
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferredPrompt = e;
+    const btn = document.getElementById('btn-installer-app');
+    if (btn) btn.style.display = 'flex';
+  });
+
+  function installerApp() {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(result => {
+      if (result.outcome === 'accepted') {
+        console.log('App installée !');
+        const btn = document.getElementById('btn-installer-app');
+        if (btn) btn.style.display = 'none';
+      }
+      deferredPrompt = null;
+    });
+  }
+</script>
+</body></html>`;
+  return envoyerEmail(email, 'Bienvenue sur BatiConnect, ' + prenom + ' ! 🎉', html);
+}
+</script>
 <script>
 // =============================================
 // FONCTIONS SUPABASE — INSCRIPTION & CONNEXION
@@ -1015,6 +1117,8 @@ async function doRegister() {
     }
 
     toast('Compte créé avec succès ! Vérifiez votre email. 📧');
+    // Envoyer email de bienvenue
+    try { await emailBienvenue(prenom, email, role); } catch(e) { console.log('Email:', e); }
     // Envoyer email de bienvenue automatiquement
     try { await emailBienvenue(email, prenom, role); } catch(e) { console.log('Email non envoyé:', e); }
       // Envoyer email de bienvenue

@@ -4,6 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BatiConnect — Prototype</title>
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#D85A30">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="BatiConnect">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
   const _URL = "https://rtxhvnbvggrpieiqyctb.supabase.co";
@@ -288,5 +297,43 @@
   <div class="footer-text">BatiConnect © 2026 · Prototype développé avec Claude (Anthropic) · Tous droits réservés</div>
 </div>
 
+
+<script>
+  // Enregistrer le Service Worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js')
+        .then(reg => console.log('SW enregistré:', reg.scope))
+        .catch(err => console.log('SW erreur:', err));
+    });
+  }
+
+  // Bouton "Installer l'app"
+  let deferredPrompt;
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferredPrompt = e;
+    const btn = document.getElementById('btn-installer-app');
+    if (btn) btn.style.display = 'flex';
+  });
+
+  function installerApp() {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(result => {
+      if (result.outcome === 'accepted') {
+        console.log('App installée !');
+        const btn = document.getElementById('btn-installer-app');
+        if (btn) btn.style.display = 'none';
+      }
+      deferredPrompt = null;
+    });
+  }
+</script>
+
+  <!-- Bouton installer l'app -->
+  <div id="btn-installer-app" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:1000;background:#D85A30;color:white;padding:14px 24px;border-radius:50px;font-family:'Sora',sans-serif;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 8px 30px rgba(216,90,48,0.4);align-items:center;gap:10px;white-space:nowrap" onclick="installerApp()">
+    📱 Installer BatiConnect sur mon téléphone
+  </div>
 </body>
 </html>
